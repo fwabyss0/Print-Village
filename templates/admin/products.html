@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Manage Products{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="dashboard-layout">
+    
+    <!-- SIDEBAR -->
+    {% from "admin/_sidebar.html" import admin_sidebar %}
+    {{ admin_sidebar(active='products') }}
+
+    <!-- MAIN CONTENT -->
+    <main class="dashboard-main">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+          <h1 class="h3 mb-0 text-white fw-bold">
+            <i class="bi bi-box-seam me-2 text-primary-pv"></i>Global Product Catalogue
+          </h1>
+          <p class="text-secondary-pv mb-0">Audit catalog items, toggle active status, and moderate listing quality</p>
+        </div>
+      </div>
+
+      <!-- PRODUCTS TABLE -->
+      <div class="card-pv p-0 overflow-hidden">
+        <div class="table-responsive">
+          <table class="table table-dark table-hover mb-0 text-white align-middle">
+            <thead>
+              <tr class="text-secondary-pv border-secondary">
+                <th class="ps-4">PID</th>
+                <th>Item</th>
+                <th>Category</th>
+                <th>Seller Store</th>
+                <th>Unit Price</th>
+                <th>Live Status</th>
+                <th class="pe-4 text-end">Moderate Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in products %}
+                <tr class="border-secondary">
+                  <td class="ps-4 text-muted">#{{ p.id }}</td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      {% if p.images %}
+                        <img src="{{ url_for('static', filename='uploads/' + p.images[0].filename) }}" class="rounded" style="width:40px; height:40px; object-fit:cover;">
+                      {% else %}
+                        <div class="rounded bg-secondary d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+                          <i class="bi bi-image" style="font-size:1rem;"></i>
+                        </div>
+                      {% endif %}
+                      <span class="fw-medium text-white">{{ p.name }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge bg-dark border border-secondary text-white">{{ p.category.name }}</span>
+                  </td>
+                  <td>
+                    <span class="small text-secondary-pv"><i class="bi bi-shop me-1"></i>{{ p.seller.full_name }}</span>
+                  </td>
+                  <td class="text-primary-pv fw-bold">Rs. {{ "{:,.2f}".format(p.price) }}</td>
+                  <td>
+                    {% if p.is_active %}
+                      <span class="badge bg-success">Visible / Active</span>
+                    {% else %}
+                      <span class="badge bg-danger">Deactivated</span>
+                    {% endif %}
+                  </td>
+                  <td class="pe-4 text-end">
+                    <div class="d-inline-flex gap-2">
+                      <!-- Toggle Status -->
+                      <form method="POST" action="{{ url_for('admin.product_toggle', pid=p.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-sm {% if p.is_active %}btn-warning text-dark{% else %}btn-success{% endif %} px-2 py-1" title="Toggle Product Visibility">
+                          {% if p.is_active %}
+                            <i class="bi bi-eye-slash"></i> Hide
+                          {% else %}
+                            <i class="bi bi-eye"></i> Show
+                          {% endif %}
+                        </button>
+                      </form>
+
+                      <!-- Delete Product -->
+                      <form method="POST" action="{{ url_for('admin.product_delete', pid=p.id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this listing permanently?')">
+                        <button type="submit" class="btn btn-danger btn-sm px-2 py-1" title="Remove Listing">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

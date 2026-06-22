@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block title %}About Us{% endblock %}
+{% block meta_description %}About Print Village — Our story, mission, vision, values and the team behind Nepal's premier
+printing service.{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<div class="page-header" style="padding:5rem 0;">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6 animate-fade-up">
+        <span class="section-label">Our Story</span>
+        <h1 class="section-title mt-2">Bringing Color to Your <span class="gradient-text">Ideas</span></h1>
+        <p style="color:var(--text-secondary);line-height:1.8;margin-top:1rem;font-size:1.05rem;">
+          Founded in 2018, Print Village started as a small printing shop in Kathmandu with one
+          HP Indigo press and a big dream — to make premium quality printing accessible to everyone.
+          Today, we serve thousands of customers across Nepal with state-of-the-art technology and
+          unmatched customer service.
+        </p>
+        <div class="d-flex gap-3 mt-4">
+          <div class="text-center px-4 py-3 card-glass" style="border-radius:14px;">
+            <div class="stat-number" style="font-size:2rem;">20+</div>
+            <small style="color:var(--text-muted);">Years</small>
+          </div>
+          <div class="text-center px-4 py-3 card-glass" style="border-radius:14px;">
+            <div class="stat-number" style="font-size:2rem;">50K+</div>
+            <small style="color:var(--text-muted);">Customers</small>
+          </div>
+          <div class="text-center px-4 py-3 card-glass" style="border-radius:14px;">
+            <div class="stat-number" style="font-size:2rem;">250K+</div>
+            <small style="color:var(--text-muted);">Prints</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 animate-fade-up delay-3">
+        <div class="card-glass p-4" style="border-radius:24px;">
+          <div class="row g-3">
+            {% for color, icon, label in [
+            ('rgba(108,99,255,.2)','bi-printer','HP Indigo Press'),
+            ('rgba(255,101,132,.2)','bi-award','ISO Certified'),
+            ('rgba(34,197,94,.2)','bi-truck','Fast Delivery'),
+            ('rgba(255,215,0,.2)','bi-shield-check','100% Quality'),
+            ] %}
+            <div class="col-6">
+              <div class="d-flex align-items-center gap-3 p-3" style="background:{{ color }};border-radius:14px;">
+                <i class="bi {{ icon }}" style="font-size:2rem;color:var(--primary-light);"></i>
+                <span style="font-weight:600;font-size:.9rem;">{{ label }}</span>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mission & Vision -->
+<section class="section-pv">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-md-4 animate-fade-up delay-1">
+        <div class="service-card h-100">
+          <div class="service-icon mx-auto mb-3">
+            <i class="bi bi-bullseye"></i>
+          </div>
+          <h3 class="fw-700 mb-3">Our Mission</h3>
+          <p style="color:var(--text-secondary);line-height:1.8;">
+            To provide every business and individual with access to premium-quality printing services
+            at affordable prices, using cutting-edge technology and delivering with exceptional speed.
+          </p>
+        </div>
+      </div>
+      <div class="col-md-4 animate-fade-up delay-2">
+        <div class="service-card h-100">
+          <div class="service-icon mx-auto mb-3">
+            <i class="bi bi-eye"></i>
+          </div>
+          <h3 class="fw-700 mb-3">Our Vision</h3>
+          <p style="color:var(--text-secondary);line-height:1.8;">
+            To become South Asia's most trusted printing partner — known for innovation, quality,
+            and sustainability. We aim to be the first choice for printing in every household and business.
+          </p>
+        </div>
+      </div>
+      <div class="col-md-4 animate-fade-up delay-3">
+        <div class="service-card h-100">
+          <div class="service-icon mx-auto mb-3">
+            <i class="bi bi-stars"></i>
+          </div>
+          <h3 class="fw-700 mb-3">Core Values</h3>
+          <ul style="color:var(--text-secondary);list-style:none;padding:0;line-height:2;">
+            <li><i class="bi bi-check2-circle text-success me-2"></i>Quality First</li>
+            <li><i class="bi bi-check2-circle text-success me-2"></i>Customer Obsession</li>
+            <li><i class="bi bi-check2-circle text-success me-2"></i>Innovation</li>
+            <li><i class="bi bi-check2-circle text-success me-2"></i>Integrity</li>
+            <li><i class="bi bi-check2-circle text-success me-2"></i>Sustainability</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Timeline -->
+<section class="section-pv" style="background:linear-gradient(180deg,rgba(108,99,255,.04) 0%,transparent);">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-label">Our Journey</span>
+      <h2 class="section-title">A Timeline of Growth</h2>
+      <div class="divider-gradient"></div>
+    </div>
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="timeline">
+          {% for year, title, desc in [
+          ('2018','Founded in Kathmandu','Started with a single HP Indigo press and 3 employees in a small shop in
+          Thamel.'),
+          ('2019','Online Platform Launch','Launched our e-commerce platform enabling customers to order from anywhere
+          in Nepal.'),
+          ('2020','Expanded Services','Added large format printing, photo printing, and corporate branding services.'),
+          ('2021','Second Press Installed','Invested in a second HP Indigo 7600 to handle growing demand and reduce
+          turnaround time.'),
+          ('2022','Nationwide Delivery','Partnered with courier services to offer printing delivery across all 77
+          districts.'),
+          ('2023','10,000 Customers Milestone','Celebrated serving over 10,000 satisfied customers with a special
+          promotion event.'),
+          ('2024','ISO Certification','Received ISO 9001:2015 certification for quality management systems.'),
+          ('2025','Print Village 2.0','Launched our new platform with seller marketplace, analytics, and AI-powered
+          recommendations.'),
+          ] %}
+          <div class="timeline-item animate-fade-up">
+            <div class="timeline-dot"></div>
+            <div class="d-flex align-items-start gap-3">
+              <div class="px-3 py-1 rounded-pill fw-700"
+                style="background:linear-gradient(135deg,rgba(108,99,255,.2),rgba(255,101,132,.15));color:var(--primary-light);font-size:.85rem;white-space:nowrap;">
+                {{ year }}
+              </div>
+              <div>
+                <h6 class="fw-700 mb-1">{{ title }}</h6>
+                <p style="color:var(--text-secondary);font-size:.9rem;margin:0;">{{ desc }}</p>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Team -->
+<section class="section-pv">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-label">Meet The Team</span>
+      <h2 class="section-title">The People Behind Print Village</h2>
+      <div class="divider-gradient"></div>
+    </div>
+    <div class="row g-4 justify-content-center">
+      {% for member in staff_members %}
+      <div class="col-md-6 col-lg-3 animate-fade-up">
+        <div class="testimonial-card text-center h-100 border border-secondary"
+          style="border-radius:20px; background:rgba(15,15,30,0.4); padding:2rem 1.5rem;">
+          <div class="mb-3 text-center">
+            {% if member.photo and member.photo != 'default_avatar.png' %}
+            <img src="{{ url_for('static', filename='uploads/' + member.photo) }}" alt="{{ member.full_name }}"
+              style="width:90px; height:90px; object-fit:cover; border-radius:50%; border:2px solid var(--primary-light); margin:0 auto;" />
+            {% else %}
+            <div style="width:90px; height:90px; background:linear-gradient(135deg,rgba(108,99,255,.2),rgba(255,101,132,.15));
+                           border-radius:50%; display:flex; align-items:center; justify-content:center;
+                           font-size:2.5rem; margin:0 auto;">
+              👤
+            </div>
+            {% endif %}
+          </div>
+          <h5 class="fw-700 mb-1">{{ member.full_name }}</h5>
+          <div class="mb-2" style="color:var(--primary-light);font-size:.85rem;font-weight:600;">{{ member.position }}
+          </div>
+          <p style="color:var(--text-muted);font-size:.85rem;line-height:1.7;">{{ member.biography }}</p>
+        </div>
+      </div>
+      {% else %}
+      <div class="col-12 text-center py-4 text-muted">
+        No team members configured yet.
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Technology Section -->
+<section class="section-pv" style="background:linear-gradient(180deg,rgba(108,99,255,.05) 0%,transparent);">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6 animate-fade-up">
+        <span class="section-label">HP Indigo Technology</span>
+        <h2 class="section-title mt-2">Printing Excellence Through Innovation</h2>
+        <p style="color:var(--text-secondary);line-height:1.8;margin-top:1rem;">
+          The HP Indigo 7600 Digital Press uses liquid electrophotography — a revolutionary
+          technology that achieves offset-like quality with the flexibility of digital printing.
+          It prints on virtually any substrate and supports the widest range of media types.
+        </p>
+        <div class="row g-3 mt-3">
+          {% for stat, label in [('7600','Press Model'),('100+','Media Types'),('300 DPI','Min Resolution'),('2400
+          DPI','Max Resolution')] %}
+          <div class="col-6">
+            <div class="p-3 card-glass" style="border-radius:12px;text-align:center;">
+              <div class="fw-800" style="font-size:1.4rem;color:var(--primary-light);">{{ stat }}</div>
+              <small style="color:var(--text-muted);">{{ label }}</small>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-lg-6 animate-fade-up delay-3">
+        <div class="video-wrapper">
+          <iframe src="https://www.youtube.com/embed/Jrp6TJFkMdg?controls=1&rel=0&modestbranding=1"
+            title="HP Indigo Press" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media"
+            allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:none;">
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.animate-fade-up').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(30px)';
+    el.style.transition = 'opacity .7s ease, transform .7s ease';
+    observer.observe(el);
+  });
+</script>
+{% endblock %}

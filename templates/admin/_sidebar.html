@@ -1,0 +1,55 @@
+{% macro admin_sidebar(active='dashboard') %}
+<aside>
+  <div class="sidebar-pv">
+    <span class="sidebar-brand"><i class="bi bi-printer-fill me-2"></i>Print Village</span>
+    <ul class="sidebar-nav">
+      <li><a href="#dashboard" class="sidebar-link active" onclick="switchPane('dashboard', this)">
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </a></li>
+
+      <li style="padding:.5rem 1rem .25rem;font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);pointer-events:none;">
+        Admin Tools
+      </li>
+
+      <li><a href="#users" class="sidebar-link" onclick="switchPane('users', this)">
+        <i class="bi bi-people"></i> Manage Users
+      </a></li>
+      <li><a href="#products" class="sidebar-link" onclick="switchPane('products', this)">
+        <i class="bi bi-box-seam"></i> All Products
+      </a></li>
+      <li><a href="#orders" class="sidebar-link" onclick="switchPane('orders', this)">
+        <i class="bi bi-receipt"></i> All Orders
+      </a></li>
+      <li><a href="#categories" class="sidebar-link" onclick="switchPane('categories', this)">
+        <i class="bi bi-tags"></i> Categories
+      </a></li>
+      <li><a href="#staff" class="sidebar-link" onclick="switchPane('staff', this)">
+        <i class="bi bi-people-fill"></i> Staffs
+      </a></li>
+      <li><a href="#profile" class="sidebar-link" onclick="switchPane('profile', this)">
+        <i class="bi bi-person-circle"></i> Profile Settings
+      </a></li>
+
+      <li style="padding:.5rem 1rem .25rem;font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);pointer-events:none;">
+        Quick Links
+      </li>
+
+      <li><a href="{{ url_for('buyer.products') }}" target="_blank">
+        <i class="bi bi-shop"></i> View Store
+      </a></li>
+    </ul>
+
+    <div class="mt-4 p-3" style="background:linear-gradient(135deg,rgba(108,99,255,.15),rgba(255,101,132,.10));border-radius:14px;border:1px solid rgba(108,99,255,.2);">
+      <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.25rem;">
+        <i class="bi bi-shield-fill-check me-1" style="color:var(--primary-light);"></i>Admin Account
+      </div>
+      <div style="font-weight:600;color:var(--text-primary);font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ current_user.full_name }}</div>
+      <div style="font-size:.75rem;color:var(--primary-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ current_user.email }}</div>
+    </div>
+
+    <a href="{{ url_for('auth.logout') }}" class="btn-pv btn-glass w-100 mt-3 justify-content-center" style="font-size:.85rem;">
+      <i class="bi bi-box-arrow-right"></i> Logout
+    </a>
+  </div>
+</aside>
+{% endmacro %}

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1 class="section-title">My Profile</h1>
+    <p style="color:var(--text-muted);">Manage your account details and security settings</p>
+  </div>
+</div>
+
+<div class="container pb-5">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="form-pv">
+        <h4 class="fw-700 mb-4"><i class="bi bi-person-circle me-2" style="color:var(--primary-light);"></i>Personal Information</h4>
+        <form method="POST" action="{{ url_for('buyer.profile') }}" novalidate>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label-pv">Full Name</label>
+              <input type="text" name="full_name" class="form-control form-control-pv"
+                     value="{{ current_user.full_name }}" required/>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-pv">Email Address</label>
+              <input type="email" class="form-control form-control-pv"
+                     value="{{ current_user.email }}" disabled
+                     style="opacity:.6;cursor:not-allowed;"/>
+              <small style="color:var(--text-muted);font-size:.75rem;">Email cannot be changed</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-pv">Phone Number</label>
+              <input type="tel" name="phone" class="form-control form-control-pv"
+                     value="{{ current_user.phone or '' }}" placeholder="+977 98-0000-0000"/>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label-pv">WhatsApp Number</label>
+              <input type="tel" name="whatsapp" class="form-control form-control-pv"
+                     value="{{ current_user.whatsapp or '' }}" placeholder="+977 98-0000-0000"/>
+            </div>
+          </div>
+
+          <hr style="border-color:var(--border-glass);margin:2rem 0;">
+
+          <h5 class="fw-700 mb-3"><i class="bi bi-shield-lock me-2" style="color:var(--accent);"></i>Change Password</h5>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label-pv">Current Password</label>
+              <input type="password" name="current_password" class="form-control form-control-pv"
+                     placeholder="Enter current password"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-pv">New Password</label>
+              <input type="password" name="new_password" class="form-control form-control-pv"
+                     placeholder="Min. 8 characters"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-pv">Confirm New Password</label>
+              <input type="password" name="confirm_new_password" class="form-control form-control-pv"
+                     placeholder="Repeat new password"/>
+            </div>
+          </div>
+
+          <div class="d-flex gap-3 mt-4">
+            <button type="submit" class="btn-pv btn-primary-pv">
+              <i class="bi bi-check-circle"></i> Save Changes
+            </button>
+            <a href="{{ url_for('buyer.dashboard') }}" class="btn-pv btn-glass">
+              Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card-glass p-4" style="border-radius:20px;text-align:center;">
+        <div style="width:100px;height:100px;background:linear-gradient(135deg,var(--primary),var(--accent));
+                     border-radius:50%;display:flex;align-items:center;justify-content:center;
+                     font-size:2.5rem;font-weight:700;color:#fff;margin:0 auto 1rem;">
+          {{ current_user.full_name[0].upper() }}
+        </div>
+        <h5 class="fw-700">{{ current_user.full_name }}</h5>
+        <div style="color:var(--primary-light);font-size:.85rem;margin-bottom:.5rem;">{{ current_user.email }}</div>
+        <span class="status-badge badge-claimed" style="font-size:.75rem;">
+          {{ current_user.role_name|title }}
+        </span>
+        <div class="mt-3 pt-3" style="border-top:1px solid var(--border-glass);">
+          <div style="color:var(--text-muted);font-size:.8rem;">Member since</div>
+          <div>{{ current_user.created_at.strftime('%B %Y') }}</div>
+        </div>
+      </div>
+
+      <div class="card-glass p-4 mt-3" style="border-radius:20px;">
+        <h6 class="fw-700 mb-3">Quick Links</h6>
+        <div class="d-flex flex-column gap-2">
+          <a href="{{ url_for('buyer.orders') }}" class="btn-pv btn-glass w-100 justify-content-start">
+            <i class="bi bi-bag-check me-2"></i> My Orders
+          </a>
+          <a href="{{ url_for('buyer.favorites') }}" class="btn-pv btn-glass w-100 justify-content-start">
+            <i class="bi bi-heart me-2"></i> Favorites
+          </a>
+          <a href="{{ url_for('main.contact') }}" class="btn-pv btn-glass w-100 justify-content-start">
+            <i class="bi bi-headset me-2"></i> Support
+          </a>
+          <a href="{{ url_for('auth.logout') }}" class="btn-pv btn-glass w-100 justify-content-start" style="color:var(--danger);">
+            <i class="bi bi-box-arrow-right me-2"></i> Logout
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

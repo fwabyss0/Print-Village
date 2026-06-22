@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Our Services{% endblock %}
+{% block meta_description %}Print Village offers Digital Printing, Offset Printing, Poster Printing, Banner Printing, Sticker Printing, Book Printing, and more premium printing services.{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="container">
+    <div class="text-center animate-fade-up">
+      <span class="section-label">What We Offer</span>
+      <h1 class="section-title mt-2">Our Printing Services</h1>
+      <p class="section-subtitle">
+        Professional printing solutions for every need — from small business cards to large format banners.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Services Grid -->
+<section class="section-pv">
+  <div class="container">
+    <div class="row g-4">
+      {% set services = [
+        ('bi-printer','Digital Printing','Full-color digital printing for short to medium run jobs with fast turnaround and exceptional quality.','From ₹5/piece','posters'),
+        ('bi-newspaper','Offset Printing','High-volume professional printing with superior color accuracy for large print runs at reduced costs.','From ₹3/piece','flyers'),
+        ('bi-card-heading','Poster Printing','Vibrant, eye-catching posters in any size. Perfect for events, retail, and advertising campaigns.','From ₹50/piece','posters'),
+        ('bi-stickies','Sticker Printing','Custom stickers in any shape — die-cut, kiss-cut, round, square. Waterproof and UV resistant.','From ₹15/piece','stickers'),
+        ('bi-book','Book Printing','Professional book printing with perfect binding, spiral, or saddle stitch. Textbooks to novels.','From ₹200/book','books'),
+        ('bi-flag','Banner Printing','Large format banners for outdoor and indoor use. Weather-resistant materials, vibrant colors.','From ₹150/sqft','banners'),
+        ('bi-file-earmark-text','Flyer Printing','High-quality flyers for marketing and promotions. Double-sided, glossy or matte finish.','From ₹5/piece','flyers'),
+        ('bi-book-half','Brochure Printing','Tri-fold, bi-fold brochures that make a lasting impression. Ideal for businesses and events.','From ₹20/piece','brochures'),
+        ('bi-building','Corporate Branding','Complete corporate identity packages — letterheads, envelopes, cards, folders, and more.','Custom Quote','corporate-branding'),
+        ('bi-gift','Customized Gifts','Personalized gifts for every occasion — mugs, t-shirts, keychains, photo products, and more.','From ₹200/item','customized-gifts'),
+        ('bi-briefcase','Business Cards','Premium business cards that make a powerful first impression. Matte, gloss, or spot UV finish.','From ₹3/card','business-cards'),
+        ('bi-image','Photo Printing','Professional-grade photo prints with true-to-life colors. Glossy, matte, or metallic finish.','From ₹10/print','photo-printing'),
+        ('bi-heart','Token of Love','Customized tokens for special moments — anniversary gifts, love frames, personalized memoirs.','From ₹500/item','token-of-love'),
+        ('bi-camera','Frame Printing','Custom frames for your cherished memories. Available in various sizes and materials.','From ₹300/frame','frames'),
+      ] %}
+
+      {% for icon, title, desc, price, slug in services %}
+      <div class="col-md-6 col-lg-4 animate-fade-up">
+        <div class="service-card h-100">
+          <div class="service-icon mx-auto">
+            <i class="bi {{ icon }}"></i>
+          </div>
+          <h4 class="fw-700 mb-2 mt-3">{{ title }}</h4>
+          <p style="color:var(--text-secondary);font-size:.92rem;line-height:1.7;margin-bottom:1.25rem;">
+            {{ desc }}
+          </p>
+          <div class="d-flex align-items-center justify-content-between mt-auto">
+            <span style="color:var(--primary-light);font-weight:700;font-size:.9rem;">{{ price }}</span>
+            <a href="{{ url_for('buyer.products') }}?category={{ slug }}" class="btn-pv btn-primary-pv btn-sm-pv">
+              <i class="bi bi-arrow-right"></i> Explore
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Technology Section -->
+<section class="section-pv" style="background:linear-gradient(180deg,rgba(108,99,255,.05) 0%,transparent 100%);">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-5">
+        <span class="section-label">Our Technology</span>
+        <h2 class="section-title mt-2">Powered by HP Indigo Technology</h2>
+        <p style="color:var(--text-secondary);line-height:1.8;margin-top:1rem;">
+          We use state-of-the-art HP Indigo digital presses to deliver unmatched print quality.
+          HP Indigo's liquid electrophotography technology produces offset-like quality with
+          digital flexibility.
+        </p>
+        <div class="d-flex flex-column gap-3 mt-4">
+          {% for feature in [
+            ('bi-check-circle-fill','Pantone-certified color accuracy'),
+            ('bi-check-circle-fill','Print on virtually any substrate'),
+            ('bi-check-circle-fill','Variable data printing support'),
+            ('bi-check-circle-fill','Up to 2400 DPI resolution'),
+            ('bi-check-circle-fill','Consistent quality across all sheets'),
+          ] %}
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi {{ feature[0] }}" style="color:var(--success);font-size:1.1rem;flex-shrink:0;"></i>
+            <span style="color:var(--text-secondary);">{{ feature[1] }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        <a href="{{ url_for('main.contact') }}" class="btn-pv btn-primary-pv mt-4">
+          <i class="bi bi-chat-dots"></i> Get a Quote
+        </a>
+      </div>
+      <div class="col-lg-7">
+        <div class="video-wrapper">
+          <iframe
+            src="https://www.youtube.com/embed/Jrp6TJFkMdg?controls=1&rel=0&modestbranding=1"
+            title="HP Indigo Digital Printing Technology"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            style="position:absolute;inset:0;width:100%;height:100%;border:none;">
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Why Choose Us -->
+<section class="section-pv">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-label">Why Print Village</span>
+      <h2 class="section-title">The Print Village Difference</h2>
+      <div class="divider-gradient"></div>
+    </div>
+    <div class="row g-4">
+      {% for icon, color, title, desc in [
+        ('bi-lightning-fill','var(--warning)','Ultra-Fast Turnaround','Same-day and next-day delivery options available for urgent orders.'),
+        ('bi-gem','var(--info)','Premium Quality','We use only professional-grade materials and inks for stunning results.'),
+        ('bi-shield-check','var(--success)','100% Satisfaction','Not satisfied? We reprint or refund. Your satisfaction is guaranteed.'),
+        ('bi-headset','var(--primary-light)','Dedicated Support','Our expert team is always available to assist with your print needs.'),
+        ('bi-tag','var(--accent)','Best Prices','Competitive pricing with bulk discounts for large orders.'),
+        ('bi-truck','var(--gold)','Nationwide Delivery','We deliver to every corner of Nepal with reliable courier partners.'),
+      ] %}
+      <div class="col-md-6 col-lg-4 animate-fade-up">
+        <div class="overview-card h-100">
+          <div class="overview-icon icon-purple" style="background:rgba(108,99,255,.1);">
+            <i class="bi {{ icon }}" style="color:{{ color }};font-size:1.6rem;"></i>
+          </div>
+          <div>
+            <div class="fw-700 mb-1" style="color:var(--text-primary);">{{ title }}</div>
+            <div style="color:var(--text-secondary);font-size:.88rem;">{{ desc }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+    }
+  });
+}, {threshold: 0.1});
+
+document.querySelectorAll('.animate-fade-up').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(30px)';
+  el.style.transition = 'opacity .7s ease, transform .7s ease';
+  observer.observe(el);
+});
+</script>
+{% endblock %}

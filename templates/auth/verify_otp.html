@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Verify Email{% endblock %}
+{% block meta_description %}Verify your email address using the one-time verification code.{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center py-5"
+     style="background:radial-gradient(ellipse 80% 60% at 30% 50%, rgba(108,99,255,.12) 0%, transparent 60%);">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-10 col-lg-8 col-xl-6">
+
+        <div class="form-pv animate-fade-up">
+          <!-- Header -->
+          <div class="text-center mb-4">
+            <a href="{{ url_for('main.index') }}" class="navbar-brand-pv text-decoration-none d-inline-block mb-3" style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;">
+              <i class="bi bi-printer-fill me-2"></i>Print Village
+            </a>
+            <h1 class="h3 mb-1">Verify Your Email</h1>
+            <p style="color:var(--text-secondary);">We sent a 6-digit verification code to <strong class="text-white">{{ email }}</strong></p>
+          </div>
+
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for cat, msg in messages %}
+              <div class="alert alert-{{ cat }} alert-dismissible fade show mb-3" role="alert"
+                   style="border-radius:12px; font-size:.88rem;">
+                {{ msg }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            {% endfor %}
+          {% endwith %}
+
+          <form method="POST" action="{{ url_for('auth.verify_otp') }}" id="otpForm" novalidate>
+            <input type="hidden" name="email" value="{{ email }}">
+
+            <!-- OTP Input -->
+            <div class="mb-4 text-center">
+              <label class="form-label-pv mb-3 text-center d-block" for="otp">
+                Enter 6-Digit Code
+              </label>
+              
+              <input type="text" id="otp" name="otp" required maxlength="6" pattern="\d{6}"
+                     class="form-control form-control-pv text-center fw-bold font-monospace"
+                     style="font-size: 2rem; letter-spacing: 0.5rem; height: 3.5rem; text-indent: 0.25rem;"
+                     placeholder="000000" autofocus autocomplete="one-time-code"/>
+            </div>
+
+            <button type="submit" class="btn-pv btn-primary-pv w-100 justify-content-center mb-3">
+              <i class="bi bi-check-circle-fill"></i> Verify &amp; Login
+            </button>
+          </form>
+
+          <div class="text-center mt-4">
+            <span style="color:var(--text-secondary);font-size:.9rem;">Didn't receive the code?</span>
+            <button id="resendBtn" class="btn btn-link p-0 ms-1 border-0" 
+                    style="color:var(--primary-light);font-weight:600;font-size:.9rem;text-decoration:none;background:none;outline:none;">
+              Resend Code
+            </button>
+            <div id="countdown" class="small text-muted mt-2" style="font-size:.8rem;"></div>
+          </div>
+          
+          <div class="text-center mt-3">
+            <a href="{{ url_for('auth.login') }}" style="color:var(--text-secondary);font-size:.85rem;text-decoration:none;">
+              <i class="bi bi-arrow-left me-1"></i> Back to login
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const resendBtn = document.getElementById('resendBtn');
+  const countdownDiv = document.getElementById('countdown');
+  let countdownTimer;
+
+  // Simple numeric validation for input
+  const otpInput = document.getElementById('otp');
+  otpInput.addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+  });
+
+  function startCountdown(seconds) {
+    resendBtn.disabled = true;
+    resendBtn.style.opacity = '0.5';
+    resendBtn.style.cursor = 'not-allowed';
+    
+    let remaining = seconds;
+    countdownDiv.textContent = `You can request a new code in ${remaining}s`;
+    
+    clearInterval(countdownTimer);
+    countdownTimer = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(countdownTimer);
+        resendBtn.disabled = false;
+        resendBtn.style.opacity = '1';
+        resendBtn.style.cursor = 'pointer';
+        countdownDiv.textContent = '';
+      } else {
+        countdownDiv.textContent = `You can request a new code in ${remaining}s`;
+      }
+    }, 1000);
+  }
+
+  // Start countdown on page load
+  startCountdown(60);
+
+  resendBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (resendBtn.disabled) return;
+
+    resendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Resending...';
+    resendBtn.disabled = true;
+
+    const formData = new FormData();
+    formData.append('email', '{{ email }}');
+
+    fetch("{{ url_for('auth.resend_otp') }}", {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.json())
+    .then(data => {
+      resendBtn.innerHTML = 'Resend Code';
+      if (data.success) {
+        if (data.bypassed) {
+          // Bypassed! Show success and reload/redirect
+          window.location.href = "{{ url_for('buyer.dashboard') }}";
+        } else {
+          // Normal resend successful
+          alert(data.message);
+          startCountdown(60);
+        }
+      } else {
+        alert(data.message || 'Failed to resend code.');
+        resendBtn.disabled = false;
+      }
+    })
+    .catch(err => {
+      resendBtn.innerHTML = 'Resend Code';
+      resendBtn.disabled = false;
+      console.error('Error resending OTP:', err);
+      alert('An error occurred. Please try again.');
+    });
+  });
+});
+</script>
+{% endblock %}

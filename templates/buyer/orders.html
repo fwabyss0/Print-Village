@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}My Orders{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1 class="section-title">My Orders</h1>
+    <p style="color:var(--text-muted);">Track all your print orders in one place</p>
+  </div>
+</div>
+
+<div class="container pb-5">
+  {% if orders %}
+    <div class="d-flex gap-2 flex-wrap mb-4">
+      <a href="{{ url_for('buyer.orders') }}" class="category-pill active">All Orders</a>
+      <a href="{{ url_for('buyer.orders') }}?status=Claimed" class="category-pill">
+        <span style="width:8px;height:8px;background:#60a5fa;border-radius:50%;display:inline-block;"></span> In Progress
+      </a>
+      <a href="{{ url_for('buyer.orders') }}?status=Completed" class="category-pill">
+        <span style="width:8px;height:8px;background:#4ade80;border-radius:50%;display:inline-block;"></span> Completed
+      </a>
+      <a href="{{ url_for('buyer.orders') }}?status=Denied" class="category-pill">
+        <span style="width:8px;height:8px;background:#f87171;border-radius:50%;display:inline-block;"></span> Denied
+      </a>
+    </div>
+
+    <div class="d-flex flex-column gap-3">
+      {% for o in orders %}
+      <div class="order-card">
+        <div class="row align-items-center g-3">
+          <div class="col-md-1">
+            <div style="font-size:.75rem;color:var(--text-muted);">Order #</div>
+            <div style="font-weight:700;color:var(--primary-light);">{{ o.id }}</div>
+          </div>
+          <div class="col-md-4">
+            <div style="font-size:.75rem;color:var(--text-muted);">Product(s)</div>
+            <div style="font-weight:600;color:var(--text-primary);">
+              {% if o.items %}
+                {{ o.items[0].product.name }}
+                {% if o.items|length > 1 %}&nbsp;<small style="color:var(--text-muted);">+{{ o.items|length - 1 }} more</small>{% endif %}
+              {% else %}Custom Print Order{% endif %}
+            </div>
+            {% if o.description %}
+            <div style="font-size:.8rem;color:var(--text-muted);margin-top:2px;">{{ o.description[:60] ~ '...' if o.description|length > 60 else o.description }}</div>
+            {% endif %}
+          </div>
+          <div class="col-md-2">
+            <div style="font-size:.75rem;color:var(--text-muted);">Amount</div>
+            <div style="font-weight:700;font-size:1.1rem;">₹{{ "%.0f"|format(o.total_amount) }}</div>
+          </div>
+          <div class="col-md-2">
+            <div style="font-size:.75rem;color:var(--text-muted);">Date</div>
+            <div>{{ o.created_at.strftime('%b %d, %Y') }}</div>
+          </div>
+          <div class="col-md-2">
+            <span class="status-badge badge-{{ o.status|lower }}">{{ o.status }}</span>
+          </div>
+          <div class="col-md-1 text-end">
+            <a href="{{ url_for('buyer.order_detail', oid=o.id) }}" class="btn-pv btn-glass btn-sm-pv">
+              <i class="bi bi-eye"></i>
+            </a>
+          </div>
+        </div>
+
+        {% if o.files %}
+        <div class="mt-3 pt-3" style="border-top:1px solid var(--border-glass);">
+          <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:.5rem;">Uploaded Files:</div>
+          <div class="d-flex gap-2 flex-wrap">
+            {% for f in o.files %}
+            <a href="{{ url_for('static', filename='uploads/' + f.filename) }}"
+               target="_blank" class="btn-pv btn-glass btn-sm-pv" style="font-size:.78rem;">
+              <i class="bi bi-file-earmark"></i> {{ f.filename.split('/')[-1][:25] }}
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <div class="text-center py-5">
+      <div style="font-size:5rem;margin-bottom:1rem;">📦</div>
+      <h3 class="fw-700 mb-2">No Orders Yet</h3>
+      <p style="color:var(--text-muted);">Place your first print order and it will appear here.</p>
+      <a href="{{ url_for('buyer.products') }}" class="btn-pv btn-primary-pv mt-3">
+        <i class="bi bi-bag-heart"></i> Shop Now
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Manage Orders{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="dashboard-layout">
+    
+    <!-- SIDEBAR -->
+    {% from "admin/_sidebar.html" import admin_sidebar %}
+    {{ admin_sidebar(active='orders') }}
+
+    <!-- MAIN CONTENT -->
+    <main class="dashboard-main">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+          <h1 class="h3 mb-0 text-white fw-bold">
+            <i class="bi bi-receipt me-2 text-primary-pv"></i>Global Orders Journal
+          </h1>
+          <p class="text-secondary-pv mb-0">Monitor platform-wide order activities, buyer transactions, and fulfillment metrics</p>
+        </div>
+      </div>
+
+      <!-- FILTER TABS -->
+      <div class="d-flex gap-2 mb-4 overflow-x-auto pb-2">
+        <a href="{{ url_for('admin.orders') }}" class="btn-pv {% if not current_status %}btn-primary-pv{% else %}btn-outline-pv{% endif %}">
+          All Orders
+        </a>
+        <a href="{{ url_for('admin.orders') }}?status=Claimed" class="btn-pv {% if current_status == 'Claimed' %}btn-primary-pv{% else %}btn-outline-pv{% endif %}">
+          Claimed
+        </a>
+        <a href="{{ url_for('admin.orders') }}?status=Completed" class="btn-pv {% if current_status == 'Completed' %}btn-primary-pv{% else %}btn-outline-pv{% endif %}">
+          Completed
+        </a>
+        <a href="{{ url_for('admin.orders') }}?status=Denied" class="btn-pv {% if current_status == 'Denied' %}btn-primary-pv{% else %}btn-outline-pv{% endif %}">
+          Denied
+        </a>
+      </div>
+
+      <!-- ORDERS TABLE -->
+      <div class="card-pv p-0 overflow-hidden">
+        {% if not orders %}
+          <div class="text-center py-5 text-secondary-pv">No orders found matching status selection.</div>
+        {% else %}
+          <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0 text-white align-middle">
+              <thead>
+                <tr class="text-secondary-pv border-secondary">
+                  <th class="ps-4">OrderID</th>
+                  <th>Customer</th>
+                  <th>Seller Store</th>
+                  <th>Order Items</th>
+                  <th>Placed Date</th>
+                  <th>Amount</th>
+                  <th class="pe-4 text-end">Fulfillment State</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for o in orders %}
+                  <tr id="order-row-{{ o.id }}" class="border-secondary admin-order-row" data-status="{{ o.status }}" onclick="openAdminOrderDetails({{ o.id }})">
+                    <td class="ps-4 text-muted">#{{ o.id }}</td>
+                    <td class="fw-semibold">{{ o.buyer.full_name }}</td>
+                    <td>
+                      <span class="small text-secondary-pv"><i class="bi bi-shop me-1"></i>{{ o.seller.full_name if o.seller else 'Not Claimed' }}</span>
+                    </td>
+                    <td>
+                      <span class="small text-white">
+                        {{ o.items[0].product.name if o.items else 'Unknown Product' }} 
+                        {% if o.items and o.items|length > 1 %}
+                          +{{ o.items|length - 1 }} more
+                        {% endif %}
+                      </span>
+                    </td>
+                    <td>{{ o.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td class="text-primary-pv fw-bold">Rs. {{ "{:,.2f}".format(o.total_amount) }}</td>
+                    <td class="pe-4 text-end" onclick="event.stopPropagation()">
+                      {% if o.status == 'Claimed' %}
+                        <span class="badge bg-primary text-dark order-badge-element">Claimed</span>
+                        <button class="btn btn-sm btn-success ms-1" onclick="updateOrderStatus({{ o.id }}, 'complete')">Complete</button>
+                        <button class="btn btn-sm btn-danger ms-1" onclick="updateOrderStatus({{ o.id }}, 'deny')">Deny</button>
+                      {% elif o.status == 'Completed' %}
+                        <span class="badge bg-success order-badge-element">Completed</span>
+                      {% elif o.status == 'Denied' %}
+                        <span class="badge bg-danger order-badge-element">Denied</span>
+                      {% else %}
+                        <span class="badge bg-warning text-dark order-badge-element">{{ o.status }}</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

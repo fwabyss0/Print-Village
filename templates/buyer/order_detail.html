@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.id }}{% endblock %}
+{% block extra_css %}
+<style>
+  .pv-buyer-timeline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .pv-buyer-timeline::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    bottom: 15px;
+    left: 17px;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.05);
+    z-index: 1;
+  }
+  .pv-b-step {
+    display: flex;
+    gap: 1.25rem;
+    position: relative;
+    z-index: 2;
+  }
+  .pv-b-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-glass);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all var(--transition);
+  }
+  .pv-b-step.completed .pv-b-icon {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 0 12px rgba(108, 99, 255, 0.3);
+  }
+  .pv-b-step.pulsing .pv-b-icon {
+    animation: pv-buyer-pulse 2s infinite;
+  }
+  @keyframes pv-buyer-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(108, 99, 255, 0.3); }
+    50% { box-shadow: 0 0 0 6px rgba(108, 99, 255, 0.15); }
+  }
+  .pv-b-step.failed .pv-b-icon {
+    background: linear-gradient(135deg, var(--danger), #b91c1c);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+  }
+  .pv-b-step.cancelled .pv-b-icon {
+    background: #4b5563;
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 0 12px rgba(156, 163, 175, 0.3);
+  }
+  .pv-b-info {
+    flex: 1;
+    padding-top: 2px;
+  }
+  .pv-b-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    transition: color var(--transition);
+  }
+  .pv-b-step.completed .pv-b-title {
+    color: var(--text-primary);
+  }
+  .pv-b-step.failed .pv-b-title {
+    color: #f87171;
+  }
+  .pv-b-step.cancelled .pv-b-title {
+    color: #9ca3af;
+  }
+  .pv-b-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.15rem;
+  }
+  .pv-b-step.completed .pv-b-desc {
+    color: var(--text-secondary);
+  }
+  .pv-b-reason {
+    font-size: 0.75rem;
+    background: rgba(239, 68, 68, 0.05);
+    border: 1px solid rgba(239, 68, 68, 0.15);
+    border-radius: 6px;
+    padding: 0.5rem;
+    color: #f87171;
+    white-space: pre-wrap;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{{ url_for('buyer.orders') }}" class="btn-pv btn-glass btn-sm-pv">
+      <i class="bi bi-arrow-left"></i> Back
+    </a>
+    <h1 class="h4 fw-700 mb-0">Order #{{ order.id }}</h1>
+    <span class="status-badge badge-{{ order.status|lower }}">{{ order.status }}</span>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card-glass p-4 mb-4" style="border-radius:20px;">
+        <h5 class="fw-700 mb-3"><i class="bi bi-person me-2 text-primary-pv"></i>Customer Details</h5>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div style="font-size:.8rem;color:var(--text-muted);">Name</div>
+            <div class="fw-600">{{ order.customer_name }}</div>
+          </div>
+          <div class="col-md-4">
+            <div style="font-size:.8rem;color:var(--text-muted);">Email</div>
+            <div>{{ order.customer_email }}</div>
+          </div>
+          <div class="col-md-4">
+            <div style="font-size:.8rem;color:var(--text-muted);">Phone</div>
+            <div>{{ order.customer_phone or 'N/A' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-glass p-4 mb-4" style="border-radius:20px;">
+        <h5 class="fw-700 mb-3"><i class="bi bi-box-seam me-2 text-primary-pv"></i>Order Items</h5>
+        {% for item in order.items %}
+        <div class="d-flex align-items-center gap-3 p-3"
+             style="background:var(--bg-glass);border-radius:12px;margin-bottom:.5rem;">
+          <div style="flex:1;">
+            <div class="fw-600">{{ item.product.name }}</div>
+            <div style="font-size:.8rem;color:var(--text-muted);">{{ item.product.category.name }}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="color:var(--text-muted);font-size:.85rem;">×{{ item.quantity }}</div>
+            <div class="fw-600">₹{{ "{:,.0f}".format(item.unit_price * item.quantity) }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if order.description or order.instructions %}
+      <div class="card-glass p-4 mb-4" style="border-radius:20px;">
+        <h5 class="fw-700 mb-3"><i class="bi bi-chat-dots me-2 text-primary-pv"></i>Customization</h5>
+        {% if order.description %}
+        <div class="mb-3">
+          <div style="font-size:.8rem;color:var(--text-muted);">Description</div>
+          <p style="color:var(--text-secondary);">{{ order.description }}</p>
+        </div>
+        {% endif %}
+        {% if order.instructions %}
+        <div>
+          <div style="font-size:.8rem;color:var(--text-muted);">Printing Instructions</div>
+          <p style="color:var(--text-secondary);">{{ order.instructions }}</p>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if order.files %}
+      <div class="card-glass p-4" style="border-radius:20px;">
+        <h5 class="fw-700 mb-3"><i class="bi bi-paperclip me-2 text-primary-pv"></i>Uploaded Files</h5>
+        <div class="img-preview-grid">
+          {% for f in order.files %}
+          <div class="img-preview-item">
+            {% if f.filename.endswith(('.jpg','.jpeg','.png','.webp')) %}
+              <img src="{{ url_for('static', filename='uploads/' + f.filename) }}" alt="Design file"/>
+            {% else %}
+              <div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;background:rgba(108,99,255,.1);">
+                <i class="bi bi-file-earmark-pdf" style="font-size:2rem;color:var(--primary-light);"></i>
+                <span style="font-size:.6rem;color:var(--text-muted);padding:4px;">{{ f.filename.split('/')[-1] }}</span>
+              </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card-glass p-4 mb-4" style="border-radius:20px;">
+        <h5 class="fw-700 mb-3">Order Summary</h5>
+        <div class="d-flex justify-content-between mb-2">
+          <span style="color:var(--text-muted);">Subtotal</span>
+          <span>₹{{ "{:,.0f}".format(order.total_amount) }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span style="color:var(--text-muted);">Delivery</span>
+          <span style="color:var(--success);">Free</span>
+        </div>
+        <hr style="border-color:var(--border-glass);">
+        <div class="d-flex justify-content-between">
+          <span class="fw-700">Total</span>
+          <span class="fw-800 product-price">₹{{ "{:,.0f}".format(order.total_amount) }}</span>
+        </div>
+        <div class="mt-3" style="font-size:.85rem;color:var(--text-muted);">
+          <div><i class="bi bi-calendar3 me-1"></i>Placed: {{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</div>
+          {% if order.size %}<div class="mt-1"><i class="bi bi-rulers me-1"></i>Size: {{ order.size }}</div>{% endif %}
+          {% if order.material %}<div class="mt-1"><i class="bi bi-layers me-1"></i>Material: {{ order.material }}</div>{% endif %}
+        </div>
+      </div>
+
+      <!-- Status Timeline -->
+      <div class="card-glass p-4" style="border-radius:20px;">
+        <h5 class="fw-700 mb-4"><i class="bi bi-bezier2 me-2 text-primary-light"></i>Order Progress</h5>
+        
+        <div class="pv-buyer-timeline">
+          <!-- Step 1: Placed -->
+          <div class="pv-b-step completed">
+            <div class="pv-b-icon">
+              <i class="bi bi-cart-check-fill"></i>
+            </div>
+            <div class="pv-b-info">
+              <div class="pv-b-title">Order Placed</div>
+              <div class="pv-b-desc">We have received your order request.</div>
+            </div>
+          </div>
+          
+          {% if order.status == 'Denied' %}
+            <!-- Denied failure step -->
+            <div class="pv-b-step failed">
+              <div class="pv-b-icon">
+                <i class="bi bi-x-circle-fill"></i>
+              </div>
+              <div class="pv-b-info">
+                <div class="pv-b-title">Order Denied</div>
+                <div class="pv-b-desc">This order was declined.</div>
+                {% if order.denied_reason %}
+                  <div class="pv-b-reason mt-2">Reason: {{ order.denied_reason }}</div>
+                {% endif %}
+              </div>
+            </div>
+          {% elif order.status == 'Cancelled' %}
+            <!-- Cancelled failure step -->
+            <div class="pv-b-step cancelled">
+              <div class="pv-b-icon">
+                <i class="bi bi-slash-circle-fill"></i>
+              </div>
+              <div class="pv-b-info">
+                <div class="pv-b-title">Order Cancelled</div>
+                <div class="pv-b-desc">You cancelled this order.</div>
+              </div>
+            </div>
+          {% else %}
+            <!-- Step 2: Processing (Claimed) -->
+            <div class="pv-b-step {% if order.status in ['Claimed', 'Completed'] %}completed{% else %}pending{% endif %} {% if order.status == 'Claimed' %}pulsing{% endif %}">
+              <div class="pv-b-icon">
+                <i class="bi bi-hourglass-split"></i>
+              </div>
+              <div class="pv-b-info">
+                <div class="pv-b-title">Order Accepted</div>
+                <div class="pv-b-desc">
+                  {% if order.status in ['Claimed', 'Completed'] %}
+                    An administrator has claimed your order and started printing/processing.
+                  {% else %}
+                    Awaiting admin assignment.
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            
+            <!-- Step 3: Delivered (Completed) -->
+            <div class="pv-b-step {% if order.status == 'Completed' %}completed{% else %}pending{% endif %}">
+              <div class="pv-b-icon">
+                <i class="bi bi-patch-check-fill"></i>
+              </div>
+              <div class="pv-b-info">
+                <div class="pv-b-title">Order Completed</div>
+                <div class="pv-b-desc">
+                  {% if order.status == 'Completed' %}
+                    Your order has been printed, packaged, and dispatched.
+                  {% else %}
+                    Awaiting fulfillment completion.
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,343 @@
+<style>
+  /* Premium styles for order progress tracking */
+  .pv-stepper-container {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-md);
+    padding: 1.5rem 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .pv-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    width: 100%;
+  }
+  .pv-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    flex: 1;
+  }
+  .pv-step-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-glass);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    transition: all var(--transition);
+  }
+  .pv-step.active .pv-step-circle {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-color: var(--primary-light);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(108, 99, 255, 0.40);
+  }
+  .pv-step.pulsing .pv-step-circle {
+    animation: pv-step-pulse 2s infinite;
+  }
+  @keyframes pv-step-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(108, 99, 255, 0.40); }
+    50% { box-shadow: 0 0 0 8px rgba(108, 99, 255, 0.15); }
+  }
+  .pv-step.completed .pv-step-circle {
+    background: linear-gradient(135deg, var(--success), #16a34a);
+    border-color: #4ade80;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.40);
+  }
+  .pv-step.failed .pv-step-circle {
+    background: linear-gradient(135deg, var(--danger), #dc2626);
+    border-color: #f87171;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.40);
+  }
+  .pv-step.cancelled .pv-step-circle {
+    background: linear-gradient(135deg, #4b5563, #374151);
+    border-color: #9ca3af;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(156, 163, 175, 0.40);
+  }
+  .pv-step-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    transition: color var(--transition);
+  }
+  .pv-step.active .pv-step-label {
+    color: var(--text-primary);
+    font-weight: 700;
+  }
+  .pv-step.completed .pv-step-label {
+    color: #4ade80;
+  }
+  .pv-step.failed .pv-step-label {
+    color: #f87171;
+  }
+  .pv-step.cancelled .pv-step-label {
+    color: #9ca3af;
+  }
+  .pv-step-line {
+    height: 3px;
+    background: var(--border-glass);
+    flex: 2;
+    margin: 0 -15px;
+    position: relative;
+    top: -12px;
+    transition: background var(--transition);
+    z-index: 1;
+  }
+  .pv-step-line.active {
+    background: linear-gradient(90deg, var(--primary-light), var(--success));
+  }
+  .pv-step-line.failed-active {
+    background: linear-gradient(90deg, var(--primary-light), var(--danger));
+  }
+  .pv-step-line.cancelled-active {
+    background: linear-gradient(90deg, var(--primary-light), #4b5563);
+  }
+  
+  .pv-timeline {
+    position: relative;
+    padding-left: 20px;
+    border-left: 2px solid var(--border-glass);
+    margin-left: 10px;
+  }
+  .pv-timeline-item {
+    position: relative;
+    margin-bottom: 1.25rem;
+  }
+  .pv-timeline-item:last-child {
+    margin-bottom: 0;
+  }
+  .pv-timeline-badge {
+    position: absolute;
+    left: -27px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    border: 2px solid var(--bg-secondary);
+  }
+  .pv-timeline-badge.badge-pending { background: #fbbf24; box-shadow: 0 0 8px rgba(245, 158, 11, 0.5); }
+  .pv-timeline-badge.badge-claimed { background: #60a5fa; box-shadow: 0 0 8px rgba(59, 130, 246, 0.5); }
+  .pv-timeline-badge.badge-completed { background: #4ade80; box-shadow: 0 0 8px rgba(34, 197, 94, 0.5); }
+  .pv-timeline-badge.badge-denied { background: #f87171; box-shadow: 0 0 8px rgba(239, 68, 68, 0.5); }
+  .pv-timeline-badge.badge-cancelled { background: #9ca3af; box-shadow: 0 0 8px rgba(156, 163, 175, 0.5); }
+
+  .pv-timeline-content {
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+  }
+</style>
+
+<div class="modal-header border-secondary text-white">
+  <h5 class="modal-title fw-700" id="orderDetailsModalLabel">Order Specifications #{{ order.id }}</h5>
+  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<div class="modal-body text-white">
+  
+  <!-- ── WORKFLOW STEPPER ── -->
+  <div class="pv-stepper-container">
+    <div class="pv-stepper">
+      <!-- Step 1: Received / Placed -->
+      <div class="pv-step {% if order.status in ['Pending', 'Claimed', 'Completed'] %}active{% endif %} {% if order.status == 'Pending' %}pulsing{% endif %}">
+        <div class="pv-step-circle">
+          <i class="bi bi-file-earmark-plus"></i>
+        </div>
+        <div class="pv-step-label">Received</div>
+      </div>
+      
+      {% if order.status == 'Denied' %}
+        <div class="pv-step-line failed-active"></div>
+        <!-- Failed / Denied State -->
+        <div class="pv-step failed">
+          <div class="pv-step-circle">
+            <i class="bi bi-x-lg"></i>
+          </div>
+          <div class="pv-step-label">Denied</div>
+        </div>
+      {% elif order.status == 'Cancelled' %}
+        <div class="pv-step-line cancelled-active"></div>
+        <!-- Cancelled State -->
+        <div class="pv-step cancelled">
+          <div class="pv-step-circle">
+            <i class="bi bi-slash-circle"></i>
+          </div>
+          <div class="pv-step-label">Cancelled</div>
+        </div>
+      {% else %}
+        <div class="pv-step-line {% if order.status in ['Claimed', 'Completed'] %}active{% endif %}"></div>
+        
+        <!-- Step 2: Claimed / Processing -->
+        <div class="pv-step {% if order.status in ['Claimed', 'Completed'] %}active{% endif %} {% if order.status == 'Claimed' %}pulsing{% endif %}">
+          <div class="pv-step-circle">
+            <i class="bi bi-hammer"></i>
+          </div>
+          <div class="pv-step-label">In Progress</div>
+        </div>
+        
+        <div class="pv-step-line {% if order.status == 'Completed' %}active{% endif %}"></div>
+        
+        <!-- Step 3: Completed / Dispatched -->
+        <div class="pv-step {% if order.status == 'Completed' %}completed{% endif %}">
+          <div class="pv-step-circle">
+            <i class="bi bi-check-lg"></i>
+          </div>
+          <div class="pv-step-label">Completed</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <span class="text-secondary-pv small">Placed on:</span>
+      <span class="small fw-semibold">{{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
+    </div>
+    <span class="status-badge badge-{{ order.status|lower }}">{{ order.status }}</span>
+  </div>
+
+  <!-- Customer details -->
+  <div class="card-glass p-3 mb-3 border border-secondary" style="border-radius:12px; background:rgba(255,255,255,0.02);">
+    <h6 class="fw-700 text-primary-pv mb-2"><i class="bi bi-person me-1"></i> Customer &amp; Company</h6>
+    <div class="row g-2 small">
+      <div class="col-md-6">
+        <span class="text-muted">Name:</span> <span class="fw-semibold">{{ order.customer_name }}</span>
+      </div>
+      <div class="col-md-6">
+        <span class="text-muted">Company:</span> <span class="fw-semibold">{{ order.buyer.company_name or 'N/A' }}</span>
+      </div>
+      <div class="col-md-6">
+        <span class="text-muted">Email:</span> <span>{{ order.customer_email }}</span>
+      </div>
+      <div class="col-md-6">
+        <span class="text-muted">Phone:</span> <span>{{ order.customer_phone or 'N/A' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Items -->
+  <div class="mb-3">
+    <h6 class="fw-700 text-primary-pv mb-2"><i class="bi bi-box-seam me-1"></i> Order Items</h6>
+    {% for item in order.items %}
+    <div class="d-flex align-items-center justify-content-between p-2 mb-2 border border-secondary rounded" style="background:rgba(255,255,255,0.01);">
+      <div>
+        <div class="fw-semibold small">{{ item.product.name }}</div>
+        <div class="text-muted" style="font-size:0.75rem;">{{ item.product.category.name }}</div>
+      </div>
+      <div class="text-end">
+        <span class="text-muted small">x{{ item.quantity }}</span>
+        <div class="fw-semibold small">₹{{ "{:,.0f}".format(item.unit_price * item.quantity) }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Customizations -->
+  {% if order.description or order.instructions or order.size or order.material or order.color %}
+  <div class="card-glass p-3 mb-3 border border-secondary" style="border-radius:12px; background:rgba(255,255,255,0.02);">
+    <h6 class="fw-700 text-primary-pv mb-2"><i class="bi bi-sliders me-1"></i> Specifications &amp; Instructions</h6>
+    <div class="row g-2 small mb-2">
+      {% if order.size %}
+      <div class="col-6"><span class="text-muted">Size:</span> {{ order.size }}</div>
+      {% endif %}
+      {% if order.material %}
+      <div class="col-6"><span class="text-muted">Material:</span> {{ order.material }}</div>
+      {% endif %}
+      {% if order.color %}
+      <div class="col-6"><span class="text-muted">Color:</span> {{ order.color }}</div>
+      {% endif %}
+    </div>
+    {% if order.description %}
+    <div class="mb-2">
+      <div class="text-muted small fw-semibold">Description:</div>
+      <p class="mb-0 small text-secondary-pv" style="white-space:pre-wrap;">{{ order.description }}</p>
+    </div>
+    {% endif %}
+    {% if order.instructions %}
+    <div>
+      <div class="text-muted small fw-semibold">Instructions:</div>
+      <p class="mb-0 small text-secondary-pv" style="white-space:pre-wrap;">{{ order.instructions }}</p>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Uploaded Files -->
+  {% if order.files %}
+  <div class="mb-3">
+    <h6 class="fw-700 text-primary-pv mb-2"><i class="bi bi-paperclip me-1"></i> Uploaded Files</h6>
+    <div class="d-flex gap-2 flex-wrap">
+      {% for f in order.files %}
+      <a href="{{ url_for('static', filename='uploads/' + f.filename) }}" target="_blank" class="btn-pv btn-glass btn-sm-pv" style="font-size:0.75rem;">
+        <i class="bi bi-file-earmark-arrow-down"></i> {{ f.filename.split('/')[-1] }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Summary -->
+  <div class="border-top border-secondary pt-3 mt-3">
+    <div class="d-flex justify-content-between small mb-1">
+      <span class="text-muted">Subtotal</span>
+      <span>₹{{ "{:,.0f}".format(order.total_amount) }}</span>
+    </div>
+    <div class="d-flex justify-content-between small mb-2">
+      <span class="text-muted">Delivery</span>
+      <span class="text-success">Free</span>
+    </div>
+    <div class="d-flex justify-content-between fw-bold">
+      <span>Total Amount</span>
+      <span class="text-primary-pv font-monospace">₹{{ "{:,.0f}".format(order.total_amount) }}</span>
+    </div>
+  </div>
+
+  <!-- timeline / Cancel Button -->
+  <div class="border-top border-secondary pt-3 mt-3 text-center">
+    {% if order.status == 'Pending' %}
+      <button type="button" class="btn btn-danger btn-sm px-4" onclick="cancelOrderModal({{ order.id }})">
+        <i class="bi bi-x-circle me-1"></i> Cancel Order
+      </button>
+    {% elif order.status == 'Cancelled' %}
+      <div class="text-danger small"><i class="bi bi-info-circle me-1"></i> Order was cancelled on {{ order.cancelled_at.strftime('%Y-%m-%d %H:%M') if order.cancelled_at else 'N/A' }}</div>
+    {% else %}
+      <div class="text-muted small"><i class="bi bi-info-circle me-1"></i> This order has been accepted and cannot be cancelled.</div>
+    {% endif %}
+  </div>
+
+  <!-- ── AUDIT LOG TIMELINE ── -->
+  {% if logs %}
+  <div class="pv-timeline-container mt-4 pt-3 border-top border-secondary">
+    <h6 class="fw-700 text-primary-pv mb-3"><i class="bi bi-clock-history me-1"></i> Order Progress History</h6>
+    <div class="pv-timeline">
+      {% for log in logs %}
+      <div class="pv-timeline-item">
+        <div class="pv-timeline-badge badge-{{ log.status|lower }}"></div>
+        <div class="pv-timeline-content">
+          <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap">
+            <span class="fw-bold text-white small">{{ log.status }}</span>
+            <span class="text-muted" style="font-size: 0.7rem;">{{ log.created_at.strftime('%b %d, %Y %I:%M %p') }}</span>
+          </div>
+          <p class="mb-0 text-secondary-pv small" style="line-height:1.5;">{{ log.notes }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>

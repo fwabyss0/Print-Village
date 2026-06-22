@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Create Account{% endblock %}
+{% block meta_description %}Join Print Village — Register as a Buyer or Seller for premium printing services.{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center py-5"
+     style="background:radial-gradient(ellipse 80% 60% at 70% 50%, rgba(255,101,132,.10) 0%, transparent 60%);">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-10 col-lg-8">
+
+        <div class="form-pv animate-fade-up">
+          <!-- Header -->
+          <div class="text-center mb-4">
+            <a href="{{ url_for('main.index') }}" class="navbar-brand-pv text-decoration-none d-inline-block mb-3"
+               style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;">
+              <i class="bi bi-printer-fill me-2"></i>Print Village
+            </a>
+            <h1 class="h3 mb-1">Create Your Account</h1>
+            <p style="color:var(--text-secondary);">Join thousands of happy customers</p>
+          </div>
+
+          <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
+
+            <div class="row g-3">
+              <!-- Full Name -->
+              <div class="col-12">
+                <label class="form-label-pv" for="full_name">
+                  <i class="bi bi-person me-1"></i> Full Name
+                </label>
+                <input type="text" id="full_name" name="full_name" required
+                       class="form-control form-control-pv"
+                       placeholder="Your full name"/>
+              </div>
+
+              <!-- Company Name -->
+              <div class="col-12">
+                <label class="form-label-pv" for="company_name">
+                  <i class="bi bi-building me-1"></i> Company Name
+                </label>
+                <input type="text" id="company_name" name="company_name" required
+                       class="form-control form-control-pv"
+                       placeholder="Your company name"/>
+              </div>
+
+              <!-- Email -->
+              <div class="col-md-6">
+                <label class="form-label-pv" for="email">
+                  <i class="bi bi-envelope me-1"></i> Email Address
+                </label>
+                <input type="email" id="email" name="email" required
+                       class="form-control form-control-pv"
+                       placeholder="you@example.com"/>
+              </div>
+
+              <!-- Phone -->
+              <div class="col-md-6">
+                <label class="form-label-pv" for="phone">
+                  <i class="bi bi-telephone me-1"></i> Phone Number
+                </label>
+                <input type="tel" id="phone" name="phone"
+                       class="form-control form-control-pv"
+                       placeholder="+977 98-0000-0000"/>
+              </div>
+
+              <!-- WhatsApp -->
+              <div class="col-md-6">
+                <label class="form-label-pv" for="whatsapp">
+                  <i class="bi bi-whatsapp me-1"></i> WhatsApp Number
+                </label>
+                <input type="tel" id="whatsapp" name="whatsapp"
+                       class="form-control form-control-pv"
+                       placeholder="+977 98-0000-0000"/>
+              </div>
+
+              <!-- Password -->
+              <div class="col-md-6">
+                <label class="form-label-pv" for="password">
+                  <i class="bi bi-lock me-1"></i> Password
+                </label>
+                <div class="position-relative">
+                  <input type="password" id="password" name="password" required
+                         class="form-control form-control-pv"
+                         placeholder="Min. 8 characters"
+                         autocomplete="new-password"/>
+                  <button type="button" class="position-absolute end-0 top-50 translate-middle-y me-2 border-0"
+                          style="background:none;color:var(--text-muted);"
+                          onclick="togglePassword('password',this)">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Confirm Password -->
+              <div class="col-md-6">
+                <label class="form-label-pv" for="confirm_password">
+                  <i class="bi bi-lock-fill me-1"></i> Confirm Password
+                </label>
+                <div class="position-relative">
+                  <input type="password" id="confirm_password" name="confirm_password" required
+                         class="form-control form-control-pv"
+                         placeholder="Repeat your password"
+                         autocomplete="new-password"/>
+                  <button type="button" class="position-absolute end-0 top-50 translate-middle-y me-2 border-0"
+                          style="background:none;color:var(--text-muted);"
+                          onclick="togglePassword('confirm_password',this)">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Password Strength -->
+              <div class="col-12">
+                <div id="passwordStrength" style="display:none;">
+                  <div style="height:4px;border-radius:2px;background:var(--border-glass);overflow:hidden;">
+                    <div id="strengthBar" style="height:100%;border-radius:2px;transition:all .3s;width:0%;"></div>
+                  </div>
+                  <small id="strengthText" style="color:var(--text-muted);font-size:.8rem;"></small>
+                </div>
+              </div>
+
+              <!-- Terms -->
+              <div class="col-12">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="terms" name="terms" required
+                         style="background:var(--bg-glass);border-color:var(--border-glass);">
+                  <label class="form-check-label" for="terms" style="color:var(--text-secondary);font-size:.9rem;">
+                    I agree to the <a href="#" style="color:var(--primary-light);">Terms of Service</a>
+                    and <a href="#" style="color:var(--primary-light);">Privacy Policy</a>
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <button type="submit" class="btn-pv btn-primary-pv w-100 justify-content-center">
+                  <i class="bi bi-person-plus"></i> Create Account
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <div class="text-center mt-4" style="color:var(--text-secondary);font-size:.9rem;">
+            Already have an account?
+            <a href="{{ url_for('auth.login') }}" style="color:var(--primary-light);font-weight:600;">Sign in</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Password strength
+document.getElementById('password').addEventListener('input', function() {
+  const pw = this.value;
+  const bar = document.getElementById('strengthBar');
+  const txt = document.getElementById('strengthText');
+  const wrap = document.getElementById('passwordStrength');
+  wrap.style.display = pw ? 'block' : 'none';
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const colors = ['#ef4444','#f59e0b','#22c55e','#6C63FF'];
+  const labels = ['Weak','Fair','Good','Strong'];
+  bar.style.width = (score * 25) + '%';
+  bar.style.background = colors[score-1] || '#ef4444';
+  txt.textContent = labels[score-1] || '';
+});
+
+function togglePassword(id, btn) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.innerHTML = inp.type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+}
+</script>
+{% endblock %}

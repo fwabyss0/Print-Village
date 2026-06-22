@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Browse Products{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="row align-items-center g-3">
+      <div class="col-lg-6">
+        <h1 class="section-title">Browse Products</h1>
+        <p style="color:var(--text-muted);margin:0;">Discover premium printing products from our expert sellers</p>
+      </div>
+      <div class="col-lg-6">
+        <form method="GET" action="{{ url_for('buyer.products') }}" class="d-flex gap-2">
+          <div class="search-bar flex-grow-1">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" name="q" value="{{ q }}" class="form-control"
+                   placeholder="Search products..."/>
+          </div>
+          <select name="sort" class="form-select form-select-pv form-control-pv" style="max-width:160px;">
+            <option value="new"       {% if sort == 'new' %}selected{% endif %}>Newest</option>
+            <option value="popular"   {% if sort == 'popular' %}selected{% endif %}>Most Popular</option>
+            <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low</option>
+            <option value="price_desc"{% if sort == 'price_desc' %}selected{% endif %}>Price: High</option>
+          </select>
+          <button type="submit" class="btn-pv btn-primary-pv btn-sm-pv">
+            <i class="bi bi-search"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container pb-5">
+  <!-- Category Pills -->
+  <div class="d-flex gap-2 flex-wrap mb-4">
+    <a href="{{ url_for('buyer.products') }}" class="category-pill {% if not current_cat %}active{% endif %}">
+      <i class="bi bi-grid"></i> All
+    </a>
+    {% for cat in categories %}
+    <a href="{{ url_for('buyer.products') }}?category={{ cat.slug }}&q={{ q }}&sort={{ sort }}"
+       class="category-pill {% if current_cat == cat.slug %}active{% endif %}">
+      <i class="bi {{ cat.icon }}"></i> {{ cat.name }}
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Results Count -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <p style="color:var(--text-muted);margin:0;font-size:.9rem;">
+      <span style="color:var(--primary-light);font-weight:700;">{{ products|length }}</span>
+      product{{ 's' if products|length != 1 }}
+      {% if q %} for "<strong>{{ q }}</strong>"{% endif %}
+      {% if current_cat %} in <strong>{{ current_cat|replace('-',' ')|title }}</strong>{% endif %}
+    </p>
+    {% if q or current_cat %}
+    <a href="{{ url_for('buyer.products') }}" style="font-size:.85rem;color:var(--accent);">
+      <i class="bi bi-x-circle me-1"></i>Clear filters
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Product Grid -->
+  {% if products %}
+  <div class="row g-4">
+    {% for product in products %}
+    <div class="col-sm-6 col-md-4 col-lg-3 animate-fade-up">
+      <div class="product-card h-100">
+        <div class="product-card-img-wrap">
+          {% if product.primary_image %}
+            <img src="{{ url_for('static', filename='uploads/' + product.primary_image) }}"
+                 alt="{{ product.name }}" class="product-card-img"/>
+          {% else %}
+            <div class="product-card-img d-flex align-items-center justify-content-center"
+                 style="background:linear-gradient(135deg,rgba(108,99,255,.15),rgba(255,101,132,.1));">
+              <i class="bi bi-image" style="font-size:3rem;color:var(--text-muted);"></i>
+            </div>
+          {% endif %}
+          <span class="product-card-badge">{{ product.category.name }}</span>
+          {% if product.is_offer_active %}
+            <span style="position:absolute;top:8px;left:8px;background:linear-gradient(135deg,var(--accent),var(--danger));color:#fff;font-size:.65rem;font-weight:800;padding:3px 8px;border-radius:100px;letter-spacing:.05em;z-index:3;text-transform:uppercase;">
+              SALE
+            </span>
+          {% endif %}
+
+          {% if current_user.is_authenticated %}
+          <button class="product-card-fav {% if product.id in fav_ids %}active{% endif %}"
+                  id="fav-{{ product.id }}"
+                  onclick="toggleFav({{ product.id }}, this)"
+                  title="Add to favorites">
+            <i class="bi bi-heart{% if product.id in fav_ids %}-fill{% endif %}"></i>
+          </button>
+          {% endif %}
+        </div>
+
+        <div class="product-card-body d-flex flex-column">
+          <div class="mb-1" style="font-size:.78rem;color:var(--text-muted);">
+            <i class="bi bi-box me-1"></i>
+            {% if product.stock > 20 %}
+              <span style="color:var(--success);">In Stock</span>
+            {% elif product.stock > 0 %}
+              <span style="color:var(--warning);">Low Stock</span>
+            {% else %}
+              <span style="color:var(--danger);">Out of Stock</span>
+            {% endif %}
+            &nbsp;·&nbsp; <i class="bi bi-eye me-1"></i>{{ product.views }} views
+          </div>
+          <h6 class="mb-1 fw-600">{{ product.name }}</h6>
+          <p style="color:var(--text-muted);font-size:.82rem;line-height:1.5;flex-grow:1;">
+            {{ product.description[:70] ~ '...' if product.description and product.description|length > 70 else product.description }}
+          </p>
+          <div class="d-flex align-items-center justify-content-between mt-2 pt-2"
+               style="border-top:1px solid var(--border-glass);">
+            <div>
+              {% if product.is_offer_active %}
+                <div>
+                  <span class="product-price" style="color:var(--accent);">₹{{ "%.0f"|format(product.discounted_price) }}</span>
+                  <span style="text-decoration:line-through;font-size:.8rem;color:var(--text-muted);margin-left:4px;">₹{{ "%.0f"|format(product.price) }}</span>
+                </div>
+              {% else %}
+                <span class="product-price">₹{{ "%.0f"|format(product.price) }}</span>
+              {% endif %}
+            </div>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('buyer.product_detail', pid=product.id) }}"
+                 class="btn-pv btn-glass btn-sm-pv" title="View details">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{{ url_for('buyer.product_detail', pid=product.id) }}"
+                 class="btn-pv btn-primary-pv btn-sm-pv">
+                Confirm Order
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="text-center py-5">
+    <div style="font-size:5rem;margin-bottom:1rem;">🔍</div>
+    <h4 class="fw-700 mb-2">No Products Found</h4>
+    <p style="color:var(--text-muted);">
+      {% if q %}No results for "{{ q }}". Try different keywords.{% else %}No products in this category yet.{% endif %}
+    </p>
+    <a href="{{ url_for('buyer.products') }}" class="btn-pv btn-primary-pv mt-2">
+      <i class="bi bi-arrow-left"></i> Browse All Products
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleFav(pid, btn) {
+  fetch(`/buyer/favorite/${pid}`, {method:'POST'})
+    .then(r => r.json())
+    .then(d => {
+      const icon = btn.querySelector('i');
+      icon.className = d.favorited ? 'bi bi-heart-fill' : 'bi bi-heart';
+      d.favorited ? btn.classList.add('active') : btn.classList.remove('active');
+    });
+}
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+    }
+  });
+}, {threshold: 0.05});
+
+document.querySelectorAll('.animate-fade-up').forEach((el, i) => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(30px)';
+  el.style.transition = `opacity .5s ease ${i * 0.05}s, transform .5s ease ${i * 0.05}s`;
+  observer.observe(el);
+});
+</script>
+{% endblock %}

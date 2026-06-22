@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% block title %}Add New Product — Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Page wrapper ───────────────────────────── */
+  .ap-wrapper {
+    min-height: 100vh;
+    background: var(--bg-dark, #0a0a1a);
+    padding: 3rem 1rem;
+  }
+
+  /* ── Form card ──────────────────────────────── */
+  .ap-card {
+    background: rgba(15, 15, 35, 0.85);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(108, 99, 255, 0.25);
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.45);
+    color: #e8e8f0;
+  }
+
+  /* ── Section headings inside card ──────────── */
+  .ap-section-title {
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--primary-light, #9b91ff);
+    margin-bottom: .75rem;
+    border-bottom: 1px solid rgba(108, 99, 255, 0.2);
+    padding-bottom: .4rem;
+  }
+
+  /* ── Labels ─────────────────────────────────── */
+  .ap-label {
+    display: block;
+    font-size: .82rem;
+    font-weight: 600;
+    color: #b8b8d0;
+    margin-bottom: .35rem;
+  }
+
+  /* ── Inputs / Textarea / Select ─────────────── */
+  .ap-input {
+    width: 100%;
+    background: rgba(20, 18, 50, 0.95) !important;
+    border: 1px solid rgba(108, 99, 255, 0.22);
+    border-radius: 10px;
+    color: #e8e8f0 !important;
+    font-size: .92rem;
+    padding: .6rem 1rem;
+    transition: border-color .2s, box-shadow .2s;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    color-scheme: dark;
+  }
+  .ap-input::placeholder { color: rgba(255,255,255,0.28); }
+  .ap-input:focus {
+    border-color: rgba(108, 99, 255, 0.7);
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.15);
+    background: rgba(20, 18, 50, 0.98) !important;
+  }
+  /* Force dark on native select dropdown */
+  select.ap-input option {
+    background: #13112e !important;
+    color: #e8e8f0 !important;
+  }
+  select.ap-input option:checked,
+  select.ap-input option:hover {
+    background: #6c63ff !important;
+    color: #fff !important;
+  }
+  /* Custom dropdown arrow */
+  select.ap-input {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%239b91ff' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+  }
+
+  /* ── File drop zone ─────────────────────────── */
+  .ap-drop-zone {
+    border: 2px dashed rgba(108, 99, 255, 0.35);
+    border-radius: 14px;
+    padding: 2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    background: rgba(108, 99, 255, 0.04);
+    position: relative;
+  }
+  .ap-drop-zone:hover,
+  .ap-drop-zone.drag-over {
+    border-color: rgba(108, 99, 255, 0.7);
+    background: rgba(108, 99, 255, 0.1);
+  }
+  .ap-drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .ap-drop-zone .drop-icon {
+    font-size: 2.2rem;
+    color: var(--primary-light, #9b91ff);
+    margin-bottom: .5rem;
+    display: block;
+  }
+  .ap-drop-zone .drop-text {
+    font-size: .88rem;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* ── Image preview strip ────────────────────── */
+  #imagePreviewStrip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+    margin-top: .8rem;
+  }
+  #imagePreviewStrip img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid rgba(108,99,255,.4);
+  }
+
+  /* ── Submit button ──────────────────────────── */
+  .ap-submit-btn {
+    width: 100%;
+    padding: .85rem;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6c63ff 0%, #ff6584 100%);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    cursor: pointer;
+    transition: opacity .2s, transform .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+  }
+  .ap-submit-btn:hover { opacity: .9; transform: translateY(-1px); }
+  .ap-submit-btn:active { transform: translateY(0); }
+
+  /* ── Back link ──────────────────────────────── */
+  .ap-back {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .85rem;
+    color: rgba(255,255,255,0.5);
+    text-decoration: none;
+    margin-bottom: 1.5rem;
+    transition: color .2s;
+  }
+  .ap-back:hover { color: var(--primary-light, #9b91ff); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ap-wrapper">
+  <div class="container">
+    <a href="{{ url_for('admin.dashboard') }}#products" class="ap-back">
+      <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+
+    <div class="row justify-content-center">
+      <div class="col-xl-7 col-lg-9">
+
+        <!-- Header -->
+        <div class="mb-4">
+          <h2 class="fw-800 mb-1" style="color: var(--primary-light, #9b91ff);">
+            <i class="bi bi-plus-square-dotted me-2"></i>Add New Product
+          </h2>
+          <p style="color: rgba(255,255,255,0.45); font-size:.9rem;">
+            Fill in the details below to list a new product in the catalogue.
+          </p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for cat, msg in messages %}
+            <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert"
+                 style="border-radius:12px; font-size:.88rem;">
+              {{ msg }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        {% endwith %}
+
+        <form class="ap-card" method="POST"
+              action="{{ url_for('admin.add_product') }}"
+              enctype="multipart/form-data"
+              id="addProductForm">
+
+          <!-- ── Core Details ── -->
+          <p class="ap-section-title"><i class="bi bi-info-circle me-1"></i>Product Details</p>
+          <div class="row g-3 mb-4">
+
+            <div class="col-12">
+              <label class="ap-label" for="prod_name">Product Name <span style="color:#ff6584;">*</span></label>
+              <input class="ap-input" type="text" id="prod_name" name="name"
+                     placeholder="e.g. Premium Business Cards (Pack of 500)" required>
+            </div>
+
+            <div class="col-12">
+              <label class="ap-label" for="prod_desc">Description</label>
+              <textarea class="ap-input" id="prod_desc" name="description" rows="4"
+                        placeholder="Materials, sizes, finish type, special notes…"></textarea>
+            </div>
+
+          </div>
+
+          <!-- ── Pricing & Stock ── -->
+          <p class="ap-section-title"><i class="bi bi-currency-rupee me-1"></i>Pricing &amp; Stock</p>
+          <div class="row g-3 mb-4">
+
+            <div class="col-sm-6">
+              <label class="ap-label" for="prod_price">Unit Price (₹) <span style="color:#ff6584;">*</span></label>
+              <input class="ap-input" type="number" id="prod_price" name="price"
+                     step="0.01" min="0" placeholder="0.00" required>
+            </div>
+
+            <div class="col-sm-6">
+              <label class="ap-label" for="prod_stock">Stock Quantity</label>
+              <input class="ap-input" type="number" id="prod_stock" name="stock"
+                     min="0" value="100" placeholder="100">
+            </div>
+
+            <div class="col-sm-6">
+              <label class="ap-label" for="prod_offer">Offer Price (₹)</label>
+              <input class="ap-input" type="number" id="prod_offer" name="offer"
+                     step="0.01" min="0" placeholder="Optional">
+            </div>
+
+            <div class="col-sm-6">
+              <label class="ap-label" for="prod_offer_duration">Offer Duration</label>
+              <input class="ap-input" type="text" id="prod_offer_duration" name="offer_duration"
+                     placeholder="e.g., 3 days, 1 week">
+            </div>
+
+          </div>
+
+          <!-- ── Category ── -->
+          <p class="ap-section-title"><i class="bi bi-tags me-1"></i>Category</p>
+          <div class="mb-4">
+            <label class="ap-label" for="prod_cat">Select Category <span style="color:#ff6584;">*</span></label>
+            <select class="ap-input" id="prod_cat" name="category_id" required
+                    style="background-color:#13112e; color:#e8e8f0; color-scheme:dark;">
+              <option value="" disabled selected style="background:#13112e;color:#e8e8f0;">— Select Category —</option>
+              {% for cat in categories %}
+                <option value="{{ cat.id }}" style="background:#13112e;color:#e8e8f0;">{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- ── Product Images ── -->
+          <p class="ap-section-title"><i class="bi bi-images me-1"></i>Product Images</p>
+          <div class="mb-4">
+            <div class="ap-drop-zone" id="dropZone">
+              <input type="file" id="prod_images" name="images"
+                     accept="image/*" multiple>
+              <i class="bi bi-cloud-arrow-up drop-icon"></i>
+              <p class="drop-text mb-1">Drag &amp; drop images here, or <strong style="color:var(--primary-light,#9b91ff);">click to browse</strong></p>
+              <p class="drop-text" style="font-size:.78rem;">PNG, JPG, WEBP — you can select multiple files</p>
+            </div>
+            <div id="imagePreviewStrip"></div>
+          </div>
+
+          <!-- ── Submit ── -->
+          <button type="submit" class="ap-submit-btn" id="submitBtn">
+            <i class="bi bi-plus-circle-fill"></i> Add Product to Catalogue
+          </button>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // ── Image preview ──────────────────────────────────────────────────────────
+  const fileInput   = document.getElementById('prod_images');
+  const previewStrip = document.getElementById('imagePreviewStrip');
+  const dropZone    = document.getElementById('dropZone');
+
+  function renderPreviews(files) {
+    previewStrip.innerHTML = '';
+    Array.from(files).forEach(f => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.title = f.name;
+        previewStrip.appendChild(img);
+      };
+      reader.readAsDataURL(f);
+    });
+  }
+
+  fileInput.addEventListener('change', () => renderPreviews(fileInput.files));
+
+  // Drag-over visual feedback
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    fileInput.files = e.dataTransfer.files;
+    renderPreviews(fileInput.files);
+  });
+
+  // ── Client-side validation ─────────────────────────────────────────────────
+  document.getElementById('addProductForm').addEventListener('submit', function(e) {
+    const price = parseFloat(document.getElementById('prod_price').value);
+    const stock = parseInt(document.getElementById('prod_stock').value);
+    if (isNaN(price) || price < 0) {
+      e.preventDefault();
+      alert('Please enter a valid price (≥ 0).');
+      return;
+    }
+    if (isNaN(stock) || stock < 0) {
+      e.preventDefault();
+      alert('Please enter a valid stock quantity (≥ 0).');
+      return;
+    }
+    const btn = document.getElementById('submitBtn');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving…';
+    btn.disabled = true;
+  });
+</script>
+{% endblock %}

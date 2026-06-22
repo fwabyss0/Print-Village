@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Feedback Received{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center py-5"
+     style="background:radial-gradient(ellipse 80% 60% at 70% 50%, rgba(34,197,94,.05) 0%, transparent 60%);">
+  <div class="container text-center">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-5">
+        <div class="form-pv p-5">
+          <div class="mb-4">
+            <i class="bi bi-patch-check-fill text-success display-1"></i>
+          </div>
+          <h2 class="fw-800 text-white mb-2">Thank You!</h2>
+          <p class="text-secondary-pv mb-4">Your feedback has been successfully recorded. We appreciate you taking the time to share your experience with us.</p>
+          <a href="/" class="btn-pv btn-primary-pv justify-content-center px-4">
+            <i class="bi bi-house-door-fill me-1"></i> Go to Homepage
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

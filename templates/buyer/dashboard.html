@@ -1,0 +1,683 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="dashboard-layout">
+
+    <!-- SIDEBAR -->
+    <aside>
+      <div class="sidebar-pv">
+        <span class="sidebar-brand"><i class="bi bi-printer-fill me-2"></i>Print Village</span>
+        <ul class="sidebar-nav">
+          <li><a href="#dashboard" class="sidebar-link active" onclick="switchPane('dashboard', this)">
+            <i class="bi bi-grid-3x3-gap"></i> Dashboard
+          </a></li>
+          <li><a href="{{ url_for('buyer.products') }}" id="nav-products">
+            <i class="bi bi-box-seam"></i> Browse Store
+          </a></li>
+          <li><a href="#orders" class="sidebar-link" onclick="switchPane('orders', this)">
+            <i class="bi bi-bag-check"></i> My Orders
+          </a></li>
+          <li><a href="#favorites" class="sidebar-link" onclick="switchPane('favorites', this)">
+            <i class="bi bi-heart"></i> Favorites
+          </a></li>
+          <li><a href="#profile" class="sidebar-link" onclick="switchPane('profile', this)">
+            <i class="bi bi-person-circle"></i> Profile Settings
+          </a></li>
+        </ul>
+
+        <div class="mt-4 p-3" style="background:linear-gradient(135deg,rgba(108,99,255,.15),rgba(255,101,132,.10));border-radius:14px;border:1px solid rgba(108,99,255,.2);">
+          <div style="font-size:.8rem;color:var(--text-muted);">Logged in as</div>
+          <div style="font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ current_user.full_name }}</div>
+          <div style="font-size:.8rem;color:var(--primary-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ current_user.email }}</div>
+        </div>
+
+        <a href="{{ url_for('auth.logout') }}" class="btn-pv btn-glass w-100 mt-3 justify-content-center" style="font-size:.85rem;">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+      </div>
+    </aside>
+
+    <!-- MAIN PANES WRAPPER -->
+    <div class="dashboard-main flex-grow-1">
+      
+      <!-- PANE: DASHBOARD -->
+      <div id="pane-dashboard" class="dashboard-pane active-pane">
+        <!-- Welcome Banner -->
+        <div class="mb-4 p-4" style="background:linear-gradient(135deg,rgba(108,99,255,.15),rgba(255,101,132,.10));border-radius:20px;border:1px solid rgba(108,99,255,.2);">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+              <h4 class="fw-800 mb-1">
+                Welcome back, {{ current_user.full_name.split()[0] }}! 👋
+              </h4>
+              <p style="color:var(--text-muted);margin:0;font-size:.9rem;">
+                Ready to bring your ideas to life? Browse our premium printing products.
+              </p>
+            </div>
+            <a href="{{ url_for('buyer.products') }}" class="btn-pv btn-primary-pv">
+              <i class="bi bi-bag-heart"></i> Shop Now
+            </a>
+          </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-md-3">
+            <div class="overview-card">
+              <div class="overview-icon icon-purple"><i class="bi bi-bag-check"></i></div>
+              <div>
+                <div class="overview-value">{{ orders|length }}</div>
+                <div class="overview-label">Total Orders</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="overview-card">
+              <div class="overview-icon icon-pink"><i class="bi bi-heart-fill"></i></div>
+              <div>
+                <div class="overview-value">{{ fav_products|length }}</div>
+                <div class="overview-label">Favorites</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="overview-card">
+              <div class="overview-icon icon-green"><i class="bi bi-check-circle"></i></div>
+              <div>
+                <div class="overview-value">{{ orders | selectattr('status','equalto','Completed') | list | length }}</div>
+                <div class="overview-label">Completed</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="overview-card">
+              <div class="overview-icon icon-blue"><i class="bi bi-clock"></i></div>
+              <div>
+                <div class="overview-value">{{ orders | selectattr('status','equalto','Claimed') | list | length }}</div>
+                <div class="overview-label">In Progress</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Orders (Dashboard page snippet) -->
+        <div class="card-glass p-4 mb-4" style="border-radius:20px;">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="fw-700 mb-0"><i class="bi bi-clock-history me-2 text-primary-pv"></i>Recent Orders</h5>
+            <button class="btn-pv btn-glass btn-sm-pv" onclick="document.querySelector('[href=\'#orders\']').click()">View All</button>
+          </div>
+          {% if recent_orders %}
+            <div class="table-responsive">
+              <table class="table-pv w-100">
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Product</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for o in recent_orders %}
+                  <tr id="recent-row-{{ o.id }}">
+                    <td style="color:var(--primary-light);font-weight:600;">#{{ o.id }}</td>
+                    <td>
+                      {% if o.items %}
+                        {{ o.items[0].product.name }}
+                        {% if o.items|length > 1 %}<small style="color:var(--text-muted);"> +{{ o.items|length - 1 }} more</small>{% endif %}
+                      {% else %}Custom Order{% endif %}
+                    </td>
+                    <td style="color:var(--text-primary);font-weight:600;">₹{{ "%.0f"|format(o.total_amount) }}</td>
+                    <td>{{ o.created_at.strftime('%b %d, %Y') }}</td>
+                    <td>
+                      <span class="status-badge badge-{{ o.status|lower }}">{{ o.status }}</span>
+                    </td>
+                    <td>
+                      <button class="btn-pv btn-glass btn-sm-pv" onclick="openOrderDetails({{ o.id }})"><i class="bi bi-eye"></i></button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-4">
+              <i class="bi bi-bag" style="font-size:2.5rem;color:var(--text-muted);display:block;margin-bottom:.75rem;"></i>
+              <p style="color:var(--text-muted);">No orders yet.</p>
+              <a href="{{ url_for('buyer.products') }}" class="btn-pv btn-primary-pv btn-sm-pv">Start Shopping</a>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Recommendations -->
+        <div class="mb-4">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="fw-700 mb-0"><i class="bi bi-stars me-2" style="color:var(--gold);"></i>Recommended For You</h5>
+            <a href="{{ url_for('buyer.products') }}" class="btn-pv btn-glass btn-sm-pv">See All</a>
+          </div>
+          <div class="row g-3">
+            {% for product in recommendations[:6] %}
+            <div class="col-sm-6 col-lg-4">
+              <div class="product-card h-100">
+                <div class="product-card-img-wrap">
+                  {% if product.primary_image %}
+                    <img src="{{ url_for('static', filename='uploads/' + product.primary_image) }}"
+                         alt="{{ product.name }}" class="product-card-img"/>
+                  {% else %}
+                    <div class="product-card-img d-flex align-items-center justify-content-center"
+                         style="background:linear-gradient(135deg,rgba(108,99,255,.15),rgba(255,101,132,.1));">
+                      <i class="bi bi-image" style="font-size:2.5rem;color:var(--text-muted);"></i>
+                    </div>
+                  {% endif %}
+                  <span class="product-card-badge">{{ product.category.name }}</span>
+                  <button class="product-card-fav {% if product.id in fav_ids %}active{% endif %}"
+                          onclick="toggleFav({{ product.id }}, this)"
+                          title="Add to favorites">
+                    <i class="bi bi-heart{% if product.id in fav_ids %}-fill{% endif %}"></i>
+                  </button>
+                </div>
+                <div class="product-card-body">
+                  <h6 class="mb-1 fw-600">{{ product.name }}</h6>
+                  <div class="d-flex align-items-center justify-content-between mt-2">
+                    <div>
+                      {% if product.is_offer_active %}
+                        <span class="product-price" style="color:var(--accent);">₹{{ "%.0f"|format(product.discounted_price) }}</span>
+                        <span style="text-decoration:line-through;font-size:.78rem;color:var(--text-muted);">₹{{ "%.0f"|format(product.price) }}</span>
+                      {% else %}
+                        <span class="product-price">₹{{ "%.0f"|format(product.price) }}</span>
+                      {% endif %}
+                    </div>
+                    <a href="{{ url_for('buyer.product_detail', pid=product.id) }}"
+                       class="btn-pv btn-primary-pv btn-sm-pv" title="Confirm Order">
+                      <i class="bi bi-bag-check"></i> Order
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% else %}
+            <div class="col-12 text-center py-3" style="color:var(--text-muted);">
+              Browse products to get personalized recommendations.
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE: ORDERS -->
+      <div id="pane-orders" class="dashboard-pane">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <div>
+            <h1 class="h3 mb-0 text-white fw-bold"><i class="bi bi-bag-check me-2 text-primary-pv"></i>My Orders</h1>
+            <p class="text-secondary-pv mb-0">Track and manage all your print order details and cancellation logs.</p>
+          </div>
+        </div>
+
+        {% if orders %}
+          <!-- Filter pills inside tab -->
+          <div class="d-flex gap-2 flex-wrap mb-4">
+            <button class="category-pill active" onclick="filterOrders('All', this)">All Orders</button>
+            <button class="category-pill" onclick="filterOrders('Pending', this)">Pending</button>
+            <button class="category-pill" onclick="filterOrders('Claimed', this)">In Progress</button>
+            <button class="category-pill" onclick="filterOrders('Completed', this)">Completed</button>
+            <button class="category-pill" onclick="filterOrders('Denied', this)">Denied</button>
+            <button class="category-pill" onclick="filterOrders('Cancelled', this)">Cancelled</button>
+          </div>
+
+          <div class="d-flex flex-column gap-3" id="orders-list-container">
+            {% for o in orders %}
+            <div class="order-card order-status-item" data-status="{{ o.status }}" id="order-card-{{ o.id }}">
+              <div class="row align-items-center g-3">
+                <div class="col-md-1">
+                  <div style="font-size:.75rem;color:var(--text-muted);">Order #</div>
+                  <div style="font-weight:700;color:var(--primary-light);">{{ o.id }}</div>
+                </div>
+                <div class="col-md-4">
+                  <div style="font-size:.75rem;color:var(--text-muted);">Product(s)</div>
+                  <div style="font-weight:600;color:var(--text-primary);">
+                    {% if o.items %}
+                      {{ o.items[0].product.name }}
+                      {% if o.items|length > 1 %}&nbsp;<small style="color:var(--text-muted);">+{{ o.items|length - 1 }} more</small>{% endif %}
+                    {% else %}Custom Print Order{% endif %}
+                  </div>
+                  {% if o.description %}
+                  <div style="font-size:.8rem;color:var(--text-muted);margin-top:2px;">{{ o.description[:80] ~ '...' if o.description|length > 80 else o.description }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-md-2">
+                  <div style="font-size:.75rem;color:var(--text-muted);">Amount</div>
+                  <div style="font-weight:700;font-size:1.1rem;">₹{{ "%.0f"|format(o.total_amount) }}</div>
+                </div>
+                <div class="col-md-2">
+                  <div style="font-size:.75rem;color:var(--text-muted);">Date</div>
+                  <div>{{ o.created_at.strftime('%b %d, %Y') }}</div>
+                </div>
+                <div class="col-md-2">
+                  <span class="status-badge badge-{{ o.status|lower }} order-badge-element">{{ o.status }}</span>
+                </div>
+                <div class="col-md-1 text-end">
+                  <button class="btn-pv btn-glass btn-sm-pv" onclick="openOrderDetails({{ o.id }})" title="View Details">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
+              </div>
+
+              {% if o.files %}
+              <div class="mt-3 pt-3" style="border-top:1px solid var(--border-glass);">
+                <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:.5rem;">Uploaded Files:</div>
+                <div class="d-flex gap-2 flex-wrap">
+                  {% for f in o.files %}
+                  <a href="{{ url_for('static', filename='uploads/' + f.filename) }}"
+                     target="_blank" class="btn-pv btn-glass btn-sm-pv" style="font-size:.78rem;">
+                    <i class="bi bi-file-earmark"></i> {{ f.filename.split('/')[-1][:25] }}
+                  </a>
+                  {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-5">
+            <div style="font-size:5rem;margin-bottom:1rem;">📦</div>
+            <h3 class="fw-700 mb-2">No Orders Yet</h3>
+            <p style="color:var(--text-muted);">Place your first print order and it will appear here.</p>
+            <a href="{{ url_for('buyer.products') }}" class="btn-pv btn-primary-pv mt-3">
+              <i class="bi bi-bag-heart"></i> Shop Now
+            </a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- PANE: FAVORITES -->
+      <div id="pane-favorites" class="dashboard-pane">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <div>
+            <h1 class="h3 mb-0 text-white fw-bold"><i class="bi bi-heart me-2 text-primary-pv"></i>My Favorites</h1>
+            <p class="text-secondary-pv mb-0">Products you've saved for quick access and reordering.</p>
+          </div>
+        </div>
+
+        <div class="row g-3" id="favorites-grid">
+          {% for product in fav_products %}
+          <div class="col-sm-6 col-lg-4 fav-item-card-{{ product.id }}">
+            <div class="product-card h-100">
+              <div class="product-card-img-wrap">
+                {% if product.primary_image %}
+                  <img src="{{ url_for('static', filename='uploads/' + product.primary_image) }}"
+                       alt="{{ product.name }}" class="product-card-img"/>
+                {% else %}
+                  <div class="product-card-img d-flex align-items-center justify-content-center"
+                       style="background:linear-gradient(135deg,rgba(108,99,255,.15),rgba(255,101,132,.1));">
+                    <i class="bi bi-image" style="font-size:2.5rem;color:var(--text-muted);"></i>
+                  </div>
+                {% endif %}
+                <span class="product-card-badge">{{ product.category.name }}</span>
+                <button class="product-card-fav active"
+                        onclick="toggleFav({{ product.id }}, this)"
+                        title="Remove from favorites">
+                  <i class="bi bi-heart-fill"></i>
+                </button>
+              </div>
+              <div class="product-card-body">
+                <h6 class="mb-1 fw-600">{{ product.name }}</h6>
+                <div class="d-flex align-items-center justify-content-between mt-2">
+                  <div>
+                    {% if product.is_offer_active %}
+                      <span class="product-price" style="color:var(--accent);">₹{{ "%.0f"|format(product.discounted_price) }}</span>
+                      <span style="text-decoration:line-through;font-size:.78rem;color:var(--text-muted);">₹{{ "%.0f"|format(product.price) }}</span>
+                    {% else %}
+                      <span class="product-price">₹{{ "%.0f"|format(product.price) }}</span>
+                    {% endif %}
+                  </div>
+                  <a href="{{ url_for('buyer.product_detail', pid=product.id) }}"
+                     class="btn-pv btn-primary-pv btn-sm-pv" title="Confirm Order">
+                    <i class="bi bi-bag-check"></i> Order
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <div class="col-12 text-center py-5" id="no-favorites-message">
+            <i class="bi bi-heart" style="font-size:3rem; color:var(--text-muted); display:block; margin-bottom:1rem;"></i>
+            <h5 class="text-white">No favorites saved yet</h5>
+            <p style="color:var(--text-muted);">Browse products in our catalog and click the heart icon to add them here.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- PANE: PROFILE -->
+      <div id="pane-profile" class="dashboard-pane">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+          <div>
+            <h1 class="h3 mb-0 text-white fw-bold"><i class="bi bi-person-circle me-2 text-primary-pv"></i>Profile Settings</h1>
+            <p class="text-secondary-pv mb-0">Update your company registration profile and change credentials.</p>
+          </div>
+        </div>
+
+        <div class="form-pv">
+          <form id="profileUpdateForm" novalidate>
+            <div class="row g-3">
+              <h5 class="fw-700 text-white border-bottom border-secondary pb-2 mb-3"><i class="bi bi-building me-1"></i>Company Information</h5>
+              
+              <div class="col-md-6">
+                <label class="form-label-pv" for="prof_name">Full Name</label>
+                <input type="text" id="prof_name" name="full_name" value="{{ current_user.full_name }}" required class="form-control form-control-pv"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label-pv" for="prof_company">Company Name</label>
+                <input type="text" id="prof_company" name="company_name" value="{{ current_user.company_name or '' }}" required class="form-control form-control-pv"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label-pv" for="prof_phone">Personal Phone</label>
+                <input type="tel" id="prof_phone" name="phone" value="{{ current_user.phone or '' }}" class="form-control form-control-pv"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label-pv" for="prof_whatsapp">WhatsApp Number</label>
+                <input type="tel" id="prof_whatsapp" name="whatsapp" value="{{ current_user.whatsapp or '' }}" class="form-control form-control-pv"/>
+              </div>
+
+              <h5 class="fw-700 text-white border-bottom border-secondary pb-2 mt-4 mb-3"><i class="bi bi-shield-lock me-1"></i>Security Settings</h5>
+              
+              <div class="col-md-4">
+                <label class="form-label-pv" for="prof_curr_pass">Current Password</label>
+                <input type="password" id="prof_curr_pass" name="current_password" placeholder="Verify current password" class="form-control form-control-pv" autocomplete="current-password"/>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label-pv" for="prof_new_pass">New Password</label>
+                <input type="password" id="prof_new_pass" name="new_password" placeholder="Min 8 characters" class="form-control form-control-pv" autocomplete="new-password"/>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label-pv" for="prof_conf_pass">Confirm New Password</label>
+                <input type="password" id="prof_conf_pass" name="confirm_password" placeholder="Repeat new password" class="form-control form-control-pv" autocomplete="new-password"/>
+              </div>
+
+              <div class="col-12 mt-4 text-end">
+                <button type="submit" class="btn-pv btn-primary-pv px-4"><i class="bi bi-save me-1"></i>Save Settings</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-secondary text-white" style="background:rgba(15,15,30,.98); border-radius:20px; backdrop-filter:blur(20px);" id="orderDetailsModalContent">
+      <div class="modal-body text-center py-5">
+        <div class="spinner-border text-primary-pv" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Switch panes dynamically without reload
+function switchPane(paneId, element) {
+  // Update sidebar active classes
+  document.querySelectorAll('.sidebar-link').forEach(link => {
+    link.classList.remove('active');
+  });
+  if (element) {
+    element.classList.add('active');
+  }
+
+  // Toggle visible pane
+  document.querySelectorAll('.dashboard-pane').forEach(pane => {
+    pane.classList.remove('active-pane');
+  });
+  const targetPane = document.getElementById('pane-' + paneId);
+  if (targetPane) {
+    targetPane.classList.add('active-pane');
+  }
+
+  // Update URL hash without reload
+  window.history.pushState(null, null, '#' + paneId);
+}
+
+// Filter orders inside My Orders pane
+function filterOrders(status, pill) {
+  // Update category pills
+  pill.parentNode.querySelectorAll('.category-pill').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  pill.classList.add('active');
+
+  // Filter items
+  const items = document.querySelectorAll('.order-status-item');
+  items.forEach(item => {
+    if (status === 'All' || item.dataset.status === status) {
+      item.style.display = 'block';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+
+// Favorite toggle AJAX
+function toggleFav(pid, btn) {
+  fetch(`/buyer/favorite/${pid}`, {
+    method: 'POST',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(r => r.json())
+  .then(d => {
+    const icon = btn.querySelector('i');
+    if (d.favorited) {
+      icon.className = 'bi bi-heart-fill';
+      btn.classList.add('active');
+      showToast('Added to favorites', 'success');
+    } else {
+      icon.className = 'bi bi-heart';
+      btn.classList.remove('active');
+      showToast('Removed from favorites', 'info');
+      // If we are on the favorites pane, dynamically remove the card
+      const favCard = document.querySelector('.fav-item-card-' + pid);
+      if (favCard) {
+        favCard.remove();
+        // Check if favorites are empty now
+        const remaining = document.querySelectorAll('#favorites-grid > div[class^="fav-item-card-"]');
+        if (remaining.length === 0) {
+          const grid = document.getElementById('favorites-grid');
+          grid.innerHTML = `
+            <div class="col-12 text-center py-5" id="no-favorites-message">
+              <i class="bi bi-heart" style="font-size:3rem; color:var(--text-muted); display:block; margin-bottom:1rem;"></i>
+              <h5 class="text-white">No favorites saved yet</h5>
+              <p style="color:var(--text-muted);">Browse products in our catalog and click the heart icon to add them here.</p>
+            </div>`;
+        }
+      }
+    }
+  })
+  .catch(err => {
+    console.error("Error toggling favorite:", err);
+    showToast('Failed to update favorite status', 'danger');
+  });
+}
+
+// Order cancellation AJAX
+function cancelOrderModal(oid) {
+  if (confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+    fetch(`/buyer/orders/${oid}/cancel`, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        showToast(data.message, 'success');
+        // Hide details modal if open
+        const modalEl = document.getElementById('orderDetailsModal');
+        const modalObj = bootstrap.Modal.getInstance(modalEl);
+        if (modalObj) modalObj.hide();
+
+        // Dynamically update status badge on order card in full list
+        const orderCard = document.getElementById('order-card-' + oid);
+        if (orderCard) {
+          orderCard.dataset.status = 'Cancelled';
+          const badge = orderCard.querySelector('.order-badge-element');
+          if (badge) {
+            badge.className = 'status-badge badge-cancelled order-badge-element';
+            badge.textContent = 'Cancelled';
+          }
+        }
+        
+        // Dynamically update status badge on recent row
+        const recentRow = document.getElementById('recent-row-' + oid);
+        if (recentRow) {
+          const badge = recentRow.querySelector('.status-badge');
+          if (badge) {
+            badge.className = 'status-badge badge-cancelled';
+            badge.textContent = 'Cancelled';
+          }
+        }
+      } else {
+        showToast(data.message, 'danger');
+      }
+    })
+    .catch(err => {
+      console.error('Error cancelling order:', err);
+      showToast('Failed to cancel order.', 'danger');
+    });
+  }
+}
+
+// Open order details modal via AJAX
+function openOrderDetails(oid) {
+  const content = document.getElementById('orderDetailsModalContent');
+  content.innerHTML = `
+    <div class="modal-body text-center py-5">
+      <div class="spinner-border text-primary-pv" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>`;
+
+  const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+  modal.show();
+
+  fetch(`/buyer/order-details/${oid}`)
+    .then(res => res.text())
+    .then(html => {
+      content.innerHTML = html;
+    })
+    .catch(err => {
+      console.error('Error fetching order details:', err);
+      content.innerHTML = `
+        <div class="modal-header border-secondary text-white">
+          <h5 class="modal-title">Error</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-danger py-4 text-center">
+          <i class="bi bi-exclamation-triangle display-4 mb-2"></i>
+          <div>Failed to load order details. Please try again.</div>
+        </div>`;
+    });
+}
+
+// Profile update form AJAX
+document.getElementById('profileUpdateForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const form = this;
+  const formData = new FormData(form);
+
+  if (formData.get('new_password') && formData.get('new_password') !== formData.get('confirm_password')) {
+    showToast('New passwords do not match.', 'danger');
+    return;
+  }
+
+  fetch('/buyer/profile/update', {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      // Clear security fields
+      document.getElementById('prof_curr_pass').value = '';
+      document.getElementById('prof_new_pass').value = '';
+      document.getElementById('prof_conf_pass').value = '';
+    } else {
+      showToast(data.message, 'danger');
+    }
+  })
+  .catch(err => {
+    console.error('Error updating profile:', err);
+    showToast('An error occurred. Please check your credentials.', 'danger');
+  });
+});
+
+// Toast helper
+function showToast(message, category = 'info') {
+  const container = document.querySelector('.position-fixed.top-0.end-0');
+  if (!container) return;
+  
+  const icons = {
+    'success': 'bi-check-circle-fill text-success',
+    'danger': 'bi-exclamation-circle-fill text-danger',
+    'warning': 'bi-exclamation-triangle-fill text-warning',
+    'info': 'bi-info-circle-fill text-info'
+  };
+  
+  const toastHtml = `
+    <div class="toast show align-items-center border-0 mb-2" role="alert" style="background:rgba(15,15,30,.95);border:1px solid rgba(255,255,255,.1) !important;border-radius:14px;backdrop-filter:blur(20px);">
+      <div class="d-flex">
+        <div class="toast-body text-white d-flex align-items-center gap-2">
+          <i class="bi ${icons[category] || icons['info']}"></i>
+          ${message}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>`;
+  
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = toastHtml;
+  const element = wrapper.firstElementChild;
+  container.appendChild(element);
+  
+  setTimeout(() => {
+    element.remove();
+  }, 4000);
+}
+
+// Detect route changes or deep links via URL hash
+window.addEventListener('DOMContentLoaded', () => {
+  const hash = window.location.hash.substring(1);
+  if (hash) {
+    const link = document.querySelector(`.sidebar-link[href="#${hash}"]`);
+    if (link) {
+      link.click();
+    }
+  }
+});
+</script>
+<style>
+.dashboard-pane {
+  display: none;
+}
+.active-pane {
+  display: block !important;
+}
+</style>
+{% endblock %}

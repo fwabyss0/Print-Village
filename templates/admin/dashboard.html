@@ -1,0 +1,1855 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+  .chart-container { position: relative; height: 250px; width: 100%; }
+  .dashboard-pane { display: none; }
+  .active-pane { display: block !important; }
+
+  /* Premium Staff Avatar Upload style */
+  .pv-avatar-upload-container {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .pv-avatar-upload-container:hover .pv-avatar-overlay {
+    opacity: 1 !important;
+  }
+  .pv-avatar-upload-container:hover .pv-avatar-preview {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(108, 99, 255, 0.50);
+    border-color: var(--accent) !important;
+  }
+  
+  @media (max-width: 991px) {
+    .border-end.border-secondary {
+      border-bottom: 1px solid var(--border-glass) !important;
+      border-right: none !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="dashboard-layout">
+
+    <!-- SIDEBAR -->
+    {% from "admin/_sidebar.html" import admin_sidebar %}
+    {{ admin_sidebar(active='dashboard') }}
+
+    <!-- MAIN PANES WRAPPER -->
+    <div class="dashboard-main flex-grow-1">
+
+      <!-- PANE: DASHBOARD / OVERVIEW -->
+      <div id="pane-dashboard" class="dashboard-pane active-pane">
+        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+          <div>
+            <h4 class="fw-800 mb-1"><i class="bi bi-shield-lock me-2" style="color:var(--primary-light);"></i>System Control Console</h4>
+            <p style="color:var(--text-muted);margin:0;font-size:.9rem;">Monitor all users, orders, revenue and platform performance.</p>
+          </div>
+        </div>
+
+        <!-- KPI Overview Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-md-3">
+            <div class="overview-card">
+              <div class="overview-icon icon-purple"><i class="bi bi-people"></i></div>
+              <div>
+                <div class="overview-value" id="kpi-customers">{{ stats.total_customers }}</div>
+                <div class="overview-label">Total Customers</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="overview-card">
+              <div class="overview-icon icon-green"><i class="bi bi-bag-check"></i></div>
+              <div>
+                <div class="overview-value" id="kpi-orders">{{ stats.total_orders }}</div>
+                <div class="overview-label">Total Orders</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="overview-card">
+              <div class="overview-icon icon-gold"><i class="bi bi-hourglass-split"></i></div>
+              <div>
+                <div class="overview-value" id="kpi-pending">{{ stats.pending_orders }}</div>
+                <div class="overview-label">Pending Orders</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="overview-card">
+              <div class="overview-icon icon-blue"><i class="bi bi-bookmark-check"></i></div>
+              <div>
+                <div class="overview-value" id="kpi-claimed">{{ stats.claimed_orders }}</div>
+                <div class="overview-label">Claimed Orders</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="overview-card">
+              <div class="overview-icon icon-danger"><i class="bi bi-x-circle"></i></div>
+              <div>
+                <div class="overview-value" id="kpi-denied">{{ stats.denied_orders }}</div>
+                <div class="overview-label">Denied Orders</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="overview-card">
+              <div class="overview-icon icon-success"><i class="bi bi-check-circle-fill"></i></div>
+              <div>
+                <div class="overview-value" id="kpi-completed">{{ stats.completed_orders }}</div>
+                <div class="overview-label">Completed Orders</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="overview-card">
+              <div class="overview-icon icon-warning"><i class="bi bi-slash-circle"></i></div>
+              <div>
+                <div class="overview-value" id="kpi-cancelled">{{ stats.cancelled_orders }}</div>
+                <div class="overview-label">Cancelled Orders</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="overview-card">
+              <div class="overview-icon icon-purple"><i class="bi bi-people-fill"></i></div>
+              <div>
+                <div class="overview-value" id="kpi-staff">{{ stats.total_staffs }}</div>
+                <div class="overview-label">Staff Members</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="row g-4 mb-4">
+          <div class="col-lg-8">
+            <div class="card-glass p-4" style="border-radius:20px;">
+              <h5 class="fw-700 mb-3"><i class="bi bi-graph-up me-2" style="color:var(--primary-light);"></i>Platform Monthly Sales Volume</h5>
+              <div class="chart-container"><canvas id="adminMonthlyRevenueChart"></canvas></div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card-glass p-4" style="border-radius:20px;">
+              <h5 class="fw-700 mb-3"><i class="bi bi-pie-chart me-2" style="color:var(--primary-light);"></i>Fulfillment Status</h5>
+              <div class="chart-container"><canvas id="adminStatusDistChart"></canvas></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="card-glass p-4" style="border-radius:20px;">
+              <h5 class="fw-700 mb-3"><i class="bi bi-trophy me-2" style="color:var(--primary-light);"></i>Top Customers Revenue</h5>
+              <div class="chart-container" style="height:200px;"><canvas id="adminTopSellersChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card-glass p-4" style="border-radius:20px;">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="fw-700 mb-0"><i class="bi bi-clock-history me-2" style="color:var(--primary-light);"></i>Recent Activity</h5>
+            <button class="btn-pv btn-glass btn-sm-pv" onclick="document.querySelector('[href=\'#orders\']').click()">View All</button>
+          </div>
+          {% if not recent_orders %}
+            <div class="text-center py-4" style="color:var(--text-muted);">
+              <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem;"></i>
+              No order activity recorded yet.
+            </div>
+          {% else %}
+            <div class="table-responsive">
+              <table class="table-pv w-100">
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Company</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-activity-rows">
+                  {% for o in recent_orders %}
+                  <tr id="recent-row-{{ o.id }}">
+                    <td style="color:var(--primary-light);font-weight:700;">#{{ o.id }}</td>
+                    <td>{{ o.buyer.full_name }}</td>
+                    <td>{{ o.buyer.company_name or 'N/A' }}</td>
+                    <td>{{ o.created_at.strftime('%b %d, %Y') }}</td>
+                    <td style="font-weight:600;">₹{{ "{:,.0f}".format(o.total_amount) }}</td>
+                    <td><span class="status-badge badge-{{ o.status|lower }} order-badge-element">{{ o.status }}</span></td>
+                    <td>
+                      <button class="btn-pv btn-glass btn-sm-pv" onclick="openAdminOrderDetails({{ o.id }})"><i class="bi bi-eye"></i></button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- PANE: MANAGE USERS -->
+      <div id="pane-users" class="dashboard-pane">
+        <h4 class="fw-800 mb-1"><i class="bi bi-people me-2" style="color:var(--primary-light);"></i>Manage Users</h4>
+        <p style="color:var(--text-muted);margin-bottom:2rem;">Audit client accounts, toggle access active states, or perform deletions.</p>
+
+        <div class="card-glass p-0 overflow-hidden" style="border-radius:20px;">
+          <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0 text-white align-middle">
+              <thead>
+                <tr class="text-secondary-pv border-secondary">
+                  <th class="ps-4">ID</th>
+                  <th>User Details</th>
+                  <th>Company</th>
+                  <th>Created At</th>
+                  <th>Verified</th>
+                  <th>Status</th>
+                  <th class="pe-4 text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body">
+                {% for u in users %}
+                  <tr class="border-secondary" id="user-row-{{ u.id }}">
+                    <td class="ps-4 text-muted">#{{ u.id }}</td>
+                    <td>
+                      <div class="fw-semibold text-white">{{ u.full_name }}</div>
+                      <small class="text-secondary-pv">{{ u.email }} | {{ u.phone or 'No Phone' }}</small>
+                    </td>
+                    <td><span class="badge bg-dark border border-secondary text-white">{{ u.company_name or 'N/A' }}</span></td>
+                    <td>{{ u.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                      {% if u.email_verified %}
+                        <span class="text-success"><i class="bi bi-patch-check-fill"></i> Yes</span>
+                      {% else %}
+                        <span class="text-warning"><i class="bi bi-patch-exclamation"></i> No</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <span class="badge {% if u.is_active_account %}bg-success{% else %}bg-danger{% endif %} user-status-badge">
+                        {% if u.is_active_account %}Active{% else %}Disabled{% endif %}
+                      </span>
+                    </td>
+                    <td class="pe-4 text-end">
+                      <div class="d-inline-flex gap-2">
+                        <button onclick="toggleUserStatus({{ u.id }}, this)" class="btn btn-sm btn-warning text-dark px-2 py-1 user-toggle-btn">
+                          {% if u.is_active_account %}Disable{% else %}Enable{% endif %}
+                        </button>
+                        <button onclick="deleteUser({{ u.id }})" class="btn btn-danger btn-sm px-2 py-1"><i class="bi bi-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE: MANAGE PRODUCTS -->
+      <div id="pane-products" class="dashboard-pane">
+        <div class="d-flex align-items-center justify-content-between mb-1 flex-wrap gap-2">
+          <div>
+            <h4 class="fw-800 mb-1"><i class="bi bi-box-seam me-2" style="color:var(--primary-light);"></i>Global Product Catalogue</h4>
+            <p style="color:var(--text-muted);margin-bottom:2rem;">Manage custom print items, configure base prices, and toggle catalogue visibility.</p>
+          </div>
+          <a href="{{ url_for('admin.add_product') }}" class="btn-pv btn-primary-pv">
+            <i class="bi bi-plus-circle me-1"></i> Add Product
+          </a>
+        </div>
+
+        <div class="card-glass p-0 overflow-hidden" style="border-radius:20px;">
+          <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0 text-white align-middle">
+              <thead>
+                <tr class="text-secondary-pv border-secondary">
+                  <th class="ps-4">PID</th>
+                  <th>Item details</th>
+                  <th>Category</th>
+                  <th>Unit Price</th>
+                  <th>Stock</th>
+                  <th>Live Status</th>
+                  <th class="pe-4 text-end">Moderate Actions</th>
+                </tr>
+              </thead>
+              <tbody id="products-table-body">
+                {% for p in products %}
+                  <tr class="border-secondary" id="product-row-{{ p.id }}">
+                    <td class="ps-4 text-muted">#{{ p.id }}</td>
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        {% if p.images %}
+                          <img src="{{ url_for('static', filename='uploads/' + p.images[0].filename) }}" class="rounded" style="width:40px; height:40px; object-fit:cover;">
+                        {% else %}
+                          <div class="rounded bg-secondary d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+                            <i class="bi bi-image" style="font-size:1rem;"></i>
+                          </div>
+                        {% endif %}
+                        <span class="fw-medium text-white product-name-cell">{{ p.name }}</span>
+                      </div>
+                    </td>
+                    <td><span class="badge bg-dark border border-secondary text-white">{{ p.category.name if p.category else '—' }}</span></td>
+                    <td class="text-primary-pv fw-bold product-price-cell">₹{{ "{:,.2f}".format(p.price) }}</td>
+                    <td class="product-stock-cell">{{ p.stock }}</td>
+                    <td>
+                      <span class="badge {% if p.is_active %}bg-success{% else %}bg-danger{% endif %} product-status-badge">
+                        {% if p.is_active %}Visible / Active{% else %}Deactivated{% endif %}
+                      </span>
+                    </td>
+                    <td class="pe-4 text-end">
+                      <div class="d-inline-flex gap-2">
+                        <button onclick="openEditProductModal(this)"
+                                data-id="{{ p.id }}"
+                                data-name="{{ p.name|e }}"
+                                data-price="{{ p.price }}"
+                                data-stock="{{ p.stock }}"
+                                data-desc="{{ p.description|e if p.description else '' }}"
+                                data-offer="{{ p.offer if p.offer else '' }}"
+                                data-offer-duration="{{ p.offer_duration|e if p.offer_duration else '' }}"
+                                class="btn btn-sm btn-info px-2 py-1">
+                          <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button onclick="toggleProductStatus({{ p.id }}, this)" class="btn btn-sm {% if p.is_active %}btn-warning text-dark{% else %}btn-success{% endif %} px-2 py-1 product-toggle-btn">
+                          {% if p.is_active %}Hide{% else %}Show{% endif %}
+                        </button>
+                        <button onclick="deleteProduct({{ p.id }})" class="btn btn-danger btn-sm px-2 py-1"><i class="bi bi-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE: MANAGE ORDERS -->
+      <div id="pane-orders" class="dashboard-pane">
+        <h4 class="fw-800 mb-1"><i class="bi bi-receipt me-2" style="color:var(--primary-light);"></i>Global Orders Journal</h4>
+        <p style="color:var(--text-muted);margin-bottom:2rem;">Track customer orders, process claims, decline configurations, and finalize printing jobs.</p>
+
+        <!-- Filter tabs -->
+        <div class="d-flex gap-2 mb-4 overflow-x-auto pb-2">
+          <button onclick="filterAdminOrders('All', this)" class="btn-pv btn-primary-pv admin-order-pill">All Orders</button>
+          <button onclick="filterAdminOrders('Pending', this)" class="btn-pv btn-outline-pv admin-order-pill">Pending</button>
+          <button onclick="filterAdminOrders('Claimed', this)" class="btn-pv btn-outline-pv admin-order-pill">Claimed</button>
+          <button onclick="filterAdminOrders('Completed', this)" class="btn-pv btn-outline-pv admin-order-pill">Completed</button>
+          <button onclick="filterAdminOrders('Denied', this)" class="btn-pv btn-outline-pv admin-order-pill">Denied</button>
+          <button onclick="filterAdminOrders('Cancelled', this)" class="btn-pv btn-outline-pv admin-order-pill">Cancelled</button>
+        </div>
+
+        <div class="card-glass p-0 overflow-hidden" style="border-radius:20px;">
+          <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0 text-white align-middle">
+              <thead>
+                <tr class="text-secondary-pv border-secondary">
+                  <th class="ps-4">OrderID</th>
+                  <th>Customer</th>
+                  <th>Company</th>
+                  <th>Order Items</th>
+                  <th>Placed Date</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th class="pe-4 text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody id="orders-table-body">
+                {% for o in orders %}
+                  <tr class="border-secondary admin-order-row" data-status="{{ o.status }}" id="order-row-{{ o.id }}">
+                    <td class="ps-4 text-muted">#{{ o.id }}</td>
+                    <td class="fw-semibold">{{ o.customer_name }}</td>
+                    <td><span class="small text-secondary-pv">{{ o.buyer.company_name or 'N/A' }}</span></td>
+                    <td>
+                      <span class="small text-white">
+                        {{ o.items[0].product.name if o.items else 'Custom Print Order' }} 
+                        {% if o.items and o.items|length > 1 %}
+                          +{{ o.items|length - 1 }} more
+                        {% endif %}
+                      </span>
+                    </td>
+                    <td>{{ o.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td class="text-primary-pv fw-bold">₹{{ "{:,.0f}".format(o.total_amount) }}</td>
+                    <td>
+                      <span class="status-badge badge-{{ o.status|lower }} order-badge-element">{{ o.status }}</span>
+                    </td>
+                    <td class="pe-4 text-end">
+                      <button onclick="openAdminOrderDetails({{ o.id }})" class="btn-pv btn-glass btn-sm-pv"><i class="bi bi-eye"></i> Process</button>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE: CATEGORIES -->
+      <div id="pane-categories" class="dashboard-pane">
+        <h4 class="fw-800 mb-1"><i class="bi bi-tags me-2" style="color:var(--primary-light);"></i>Product Categories</h4>
+        <p style="color:var(--text-muted);margin-bottom:2rem;">Add or remove product categories for customer browsing navigation filters.</p>
+
+        <div class="row g-4">
+          <!-- Add Category Form -->
+          <div class="col-md-4">
+            <div class="form-pv">
+              <h5 class="fw-700 text-white mb-3"><i class="bi bi-plus-circle me-1"></i>Add Category</h5>
+              <form id="addCategoryForm">
+                <div class="mb-3">
+                  <label for="cat_name" class="form-label-pv">Category Name</label>
+                  <input type="text" id="cat_name" name="name" placeholder="e.g. Greeting Cards" required class="form-control form-control-pv" />
+                </div>
+                <div class="mb-3">
+                  <label for="cat_icon" class="form-label-pv">Bootstrap Icon class</label>
+                  <input type="text" id="cat_icon" name="icon" value="bi-box" placeholder="e.g. bi-envelope" class="form-control form-control-pv" />
+                </div>
+                <button type="submit" class="btn-pv btn-primary-pv w-100 justify-content-center"><i class="bi bi-save"></i> Save Category</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Categories List -->
+          <div class="col-md-8">
+            <div class="card-glass p-4" style="border-radius:20px;">
+              <h5 class="fw-700 text-white mb-3"><i class="bi bi-list-task me-1"></i>Active Categories</h5>
+              <div class="table-responsive">
+                <table class="table table-dark align-middle mb-0">
+                  <thead>
+                    <tr class="text-secondary-pv">
+                      <th>Icon</th>
+                      <th>Category Name</th>
+                      <th>Slug Identifier</th>
+                      <th class="text-end">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="categories-table-body">
+                    {% for c in categories %}
+                      <tr id="cat-row-{{ c.id }}">
+                        <td><i class="bi {{ c.icon }} text-primary-pv" style="font-size:1.2rem;"></i></td>
+                        <td class="fw-semibold">{{ c.name }}</td>
+                        <td class="text-muted font-monospace">{{ c.slug }}</td>
+                        <td class="text-end">
+                          <button onclick="deleteCategory({{ c.id }})" class="btn btn-danger btn-sm px-2 py-1"><i class="bi bi-trash"></i></button>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE: STAFFS -->
+      <div id="pane-staff" class="dashboard-pane">
+        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+          <div>
+            <h4 class="fw-800 mb-1"><i class="bi bi-people-fill me-2" style="color:var(--primary-light);"></i>Staff Directory</h4>
+            <p style="color:var(--text-muted);margin:0;">Add, modify parameters, delete, or activate/deactivate Print Village staff members.</p>
+          </div>
+          <button class="btn-pv btn-primary-pv" data-bs-toggle="modal" data-bs-target="#addStaffModal"><i class="bi bi-person-plus"></i> Add Staff</button>
+        </div>
+
+        <!-- Search, Filter, Sort Controls -->
+        <div class="card-glass p-3 mb-4 border border-secondary" style="border-radius:14px; background:rgba(255,255,255,0.02);">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="staffSearch" class="form-label-pv">Search</label>
+              <div class="position-relative">
+                <input type="text" id="staffSearch" class="form-control form-control-pv ps-5" placeholder="Search by name, position, department..." oninput="currentStaffPage=1; fetchStaffDirectory();">
+                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-secondary-pv"></i>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <label for="staffFilterDept" class="form-label-pv">Department</label>
+              <select id="staffFilterDept" class="form-select form-select-pv" onchange="currentStaffPage=1; fetchStaffDirectory();">
+                <option value="">All Departments</option>
+                {% for dept in departments %}
+                  <option value="{{ dept }}">{{ dept }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-2 col-6">
+              <label for="staffFilterPos" class="form-label-pv">Position</label>
+              <select id="staffFilterPos" class="form-select form-select-pv" onchange="currentStaffPage=1; fetchStaffDirectory();">
+                <option value="">All Positions</option>
+                {% for pos in positions %}
+                  <option value="{{ pos }}">{{ pos }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="staffSort" class="form-label-pv">Sort By</label>
+              <select id="staffSort" class="form-select form-select-pv" onchange="currentStaffPage=1; fetchStaffDirectory();">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="alpha_asc">Alphabetical A-Z</option>
+                <option value="alpha_desc">Alphabetical Z-A</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3" id="staff-directory-grid">
+          <div class="col-12 text-center py-5">
+            <div class="spinner-border text-primary-pv" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-4 pt-3 border-top border-secondary">
+          <div class="text-secondary-pv small" id="staffPaginationInfo">
+            Showing 0-0 of 0 entries
+          </div>
+          <nav aria-label="Staff directory pagination">
+            <ul class="pagination pagination-pv mb-0" id="staffPagination">
+              <!-- Dynamically populated -->
+            </ul>
+          </nav>
+        </div>
+      </div>
+
+      <!-- PANE: ADMIN PROFILE SETTINGS -->
+      <div id="pane-profile" class="dashboard-pane">
+        <h4 class="fw-800 mb-1"><i class="bi bi-person-circle me-2" style="color:var(--primary-light);"></i>Admin Profile Settings</h4>
+        <p style="color:var(--text-muted);margin-bottom:2rem;">Modify your administrative parameters, update contact credentials, or change safety keys.</p>
+
+        <div class="form-pv">
+          <form id="adminProfileForm" novalidate enctype="multipart/form-data">
+            <div class="row g-3">
+              <h5 class="fw-700 text-white border-bottom border-secondary pb-2 mb-3"><i class="bi bi-person me-1"></i>Profile Credentials</h5>
+
+              <div class="col-md-6">
+                <label class="form-label-pv" for="adm_name">Full Name</label>
+                <input type="text" id="adm_name" name="full_name" value="{{ current_user.full_name }}" required class="form-control form-control-pv"/>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label-pv" for="adm_email">Email Address</label>
+                <input type="email" id="adm_email" name="email" value="{{ current_user.email }}" required class="form-control form-control-pv"/>
+              </div>
+              <div class="col-12">
+                <label class="form-label-pv" for="adm_photo">Update Profile Photo</label>
+                <input type="file" id="adm_photo" name="profile_photo" accept="image/*" class="form-control form-control-pv"/>
+                <small class="text-muted">Choose an image to replace the current dashboard avatar.</small>
+              </div>
+
+              <h5 class="fw-700 text-white border-bottom border-secondary pb-2 mt-4 mb-3"><i class="bi bi-shield-lock me-1"></i>Security Override</h5>
+
+              <div class="col-md-4">
+                <label class="form-label-pv" for="adm_curr_pass">Current Password</label>
+                <input type="password" id="adm_curr_pass" name="current_password" placeholder="Verify current credentials" class="form-control form-control-pv" autocomplete="current-password"/>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label-pv" for="adm_new_pass">New Password</label>
+                <input type="password" id="adm_new_pass" name="new_password" placeholder="Min 8 characters" class="form-control form-control-pv" autocomplete="new-password"/>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label-pv" for="adm_conf_pass">Confirm Password</label>
+                <input type="password" id="adm_conf_pass" name="confirm_password" placeholder="Repeat new credentials" class="form-control form-control-pv" autocomplete="new-password"/>
+              </div>
+
+              <div class="col-12 mt-4 text-end">
+                <button type="submit" class="btn-pv btn-primary-pv px-4"><i class="bi bi-save me-1"></i>Save Changes</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-secondary text-white" style="background:rgba(15,15,30,.98); border-radius:20px; backdrop-filter:blur(20px);">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title fw-700" id="editProductModalLabel">
+          <i class="bi bi-pencil-square me-1 text-info"></i> Edit Product
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="ep_id">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label text-secondary" for="ep_name">Product Name</label>
+            <input type="text" id="ep_name" class="form-control bg-dark text-white border-secondary" placeholder="Product name">
+          </div>
+          <div class="col-6">
+            <label class="form-label text-secondary" for="ep_price">Price (₹)</label>
+            <input type="number" id="ep_price" step="0.01" min="0"
+                   class="form-control bg-dark text-white border-secondary" placeholder="0.00">
+          </div>
+          <div class="col-6">
+            <label class="form-label text-secondary" for="ep_stock">Stock</label>
+            <input type="number" id="ep_stock" min="0"
+                   class="form-control bg-dark text-white border-secondary" placeholder="100">
+          </div>
+          <div class="col-6">
+            <label class="form-label text-secondary" for="ep_offer">Offer Price (₹)</label>
+            <input type="number" id="ep_offer" step="0.01" min="0"
+                   class="form-control bg-dark text-white border-secondary" placeholder="Optional">
+          </div>
+          <div class="col-6">
+            <label class="form-label text-secondary" for="ep_offer_duration">Offer Duration</label>
+            <input type="text" id="ep_offer_duration"
+                   class="form-control bg-dark text-white border-secondary" placeholder="e.g., 3 days, 1 week">
+          </div>
+          <div class="col-12">
+            <label class="form-label text-secondary" for="ep_desc">Description</label>
+            <textarea id="ep_desc" rows="3"
+                      class="form-control bg-dark text-white border-secondary" placeholder="Product description"></textarea>
+          </div>
+        </div>
+        <div id="ep_error" class="text-danger small mt-2" style="display:none;"></div>
+      </div>
+      <div class="modal-footer border-secondary">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn-pv btn-primary-pv" id="saveProductEditBtn" onclick="saveProductEdit()">
+          <i class="bi bi-save me-1"></i> Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Staff Modal -->
+<div class="modal fade" id="addStaffModal" tabindex="-1" aria-labelledby="addStaffModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-secondary text-white" style="background:rgba(15,15,30,.98); border-radius:20px; backdrop-filter:blur(20px);">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title fw-700" id="addStaffModalLabel"><i class="bi bi-person-plus me-1 text-primary-pv"></i>Add Staff Member</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="addStaffForm">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="st_name" class="form-label-pv">Full Name *</label>
+              <input type="text" id="st_name" name="full_name" required class="form-control form-control-pv" placeholder="Ramesh Shrestha"/>
+            </div>
+            <div class="col-md-6">
+              <label for="st_pos" class="form-label-pv">Position *</label>
+              <input type="text" id="st_pos" name="position" required class="form-control form-control-pv" placeholder="Print Technician"/>
+            </div>
+            <div class="col-md-6">
+              <label for="st_dep" class="form-label-pv">Department</label>
+              <input type="text" id="st_dep" name="department" class="form-control form-control-pv" placeholder="Production"/>
+            </div>
+            <div class="col-md-6">
+              <label for="st_email" class="form-label-pv">Email Address</label>
+              <input type="email" id="st_email" name="email" class="form-control form-control-pv" placeholder="ramesh@printvillage.com"/>
+            </div>
+            <div class="col-md-6">
+              <label for="st_phone" class="form-label-pv">Phone Number</label>
+              <input type="tel" id="st_phone" name="phone" class="form-control form-control-pv" placeholder="9812345678"/>
+            </div>
+            <div class="col-md-6">
+              <label for="st_date" class="form-label-pv">Joining Date</label>
+              <input type="date" id="st_date" name="joining_date" class="form-control form-control-pv"/>
+            </div>
+            <div class="col-12">
+              <label for="st_photo" class="form-label-pv">Profile Photo</label>
+              <input type="file" id="st_photo" name="photo" accept="image/*" class="form-control form-control-pv"/>
+            </div>
+            <div class="col-12">
+              <label for="st_bio" class="form-label-pv">Biography / Bio</label>
+              <textarea id="st_bio" name="biography" rows="4" class="form-control form-control-pv" placeholder="Short description of the employee..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn-pv btn-primary-pv"><i class="bi bi-person-plus-fill me-1"></i>Add Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Staff Modal -->
+<div class="modal fade" id="editStaffModal" tabindex="-1" aria-labelledby="editStaffModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-secondary text-white" style="background:rgba(15,15,30,.98); border-radius:20px; backdrop-filter:blur(20px);">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title fw-700" id="editStaffModalLabel"><i class="bi bi-pencil-square me-1 text-primary-pv"></i>Edit Staff parameters</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="editStaffForm">
+        <input type="hidden" id="edit_st_id" name="sid" />
+        <div class="modal-body">
+          <div class="row g-4">
+            <div class="col-lg-4 text-center d-flex flex-column align-items-center justify-content-center border-end border-secondary pb-3 pb-lg-0">
+              <div class="pv-avatar-upload-container position-relative mb-3">
+                <img id="edit_st_avatar_preview" src="/static/uploads/default_avatar.png" alt="Staff Preview" class="pv-avatar-preview img-fluid rounded-circle border border-2 border-primary" style="width: 140px; height: 140px; object-fit: cover; box-shadow: var(--shadow-sm); transition: all var(--transition);">
+                <div class="pv-avatar-overlay position-absolute inset-0 d-flex flex-column align-items-center justify-content-center rounded-circle" style="background: rgba(0,0,0,0.6); opacity: 0; transition: opacity var(--transition); cursor: pointer;" onclick="document.getElementById('edit_st_photo').click();">
+                  <i class="bi bi-camera-fill text-white fs-4 mb-1"></i>
+                  <span class="text-white fw-semibold" style="font-size: 0.75rem;">Change Photo</span>
+                </div>
+              </div>
+              <input type="file" id="edit_st_photo" name="photo" accept="image/*" class="d-none" />
+              <button type="button" class="btn btn-sm btn-glass px-3 py-1 mb-4" onclick="document.getElementById('edit_st_photo').click();">
+                <i class="bi bi-upload me-1"></i> Select Photo
+              </button>
+              <div class="w-100 px-2 text-start">
+                <label for="edit_st_date" class="form-label-pv"><i class="bi bi-calendar-event me-1 text-primary-light"></i> Joining Date</label>
+                <input type="date" id="edit_st_date" name="joining_date" class="form-control form-control-pv" />
+              </div>
+            </div>
+            <div class="col-lg-8">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="edit_st_name" class="form-label-pv"><i class="bi bi-person me-1 text-primary-light"></i> Full Name *</label>
+                  <input type="text" id="edit_st_name" name="full_name" required class="form-control form-control-pv" placeholder="e.g. Ramesh Shrestha"/>
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_st_pos" class="form-label-pv"><i class="bi bi-briefcase me-1 text-primary-light"></i> Position *</label>
+                  <input type="text" id="edit_st_pos" name="position" required class="form-control form-control-pv" placeholder="e.g. CEO & Founder"/>
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_st_dep" class="form-label-pv"><i class="bi bi-building me-1 text-primary-light"></i> Department</label>
+                  <input type="text" id="edit_st_dep" name="department" class="form-control form-control-pv" placeholder="e.g. Production"/>
+                </div>
+                <div class="col-md-6">
+                  <label for="edit_st_email" class="form-label-pv"><i class="bi bi-envelope me-1 text-primary-light"></i> Email Address</label>
+                  <input type="email" id="edit_st_email" name="email" class="form-control form-control-pv" placeholder="e.g. ramesh@printvillage.com"/>
+                </div>
+                <div class="col-12">
+                  <label for="edit_st_phone" class="form-label-pv"><i class="bi bi-telephone me-1 text-primary-light"></i> Phone Number</label>
+                  <input type="tel" id="edit_st_phone" name="phone" class="form-control form-control-pv" placeholder="e.g. 9801234567"/>
+                </div>
+                <div class="col-12">
+                  <label for="edit_st_bio" class="form-label-pv"><i class="bi bi-file-earmark-text me-1 text-primary-light"></i> Biography / Bio</label>
+                  <textarea id="edit_st_bio" name="biography" rows="4" class="form-control form-control-pv" placeholder="Write a short description..." maxlength="1000"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn-pv btn-primary-pv"><i class="bi bi-save me-1"></i>Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Order Details Modal -->
+<div class="modal fade" id="adminOrderModal" tabindex="-1" aria-labelledby="adminOrderModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-secondary text-white" style="background:rgba(15,15,30,.98); border-radius:20px; backdrop-filter:blur(20px);" id="adminOrderModalContent">
+      <div class="modal-body text-center py-5">
+        <div class="spinner-border text-primary-pv" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Deny Order Modal -->
+<div class="modal fade" id="denyOrderModal" tabindex="-1" aria-labelledby="denyOrderModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-secondary text-white" style="background:rgba(15,15,30,.98); border-radius:20px; backdrop-filter:blur(20px);">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title fw-700" id="denyOrderModalLabel"><i class="bi bi-x-circle me-1 text-danger"></i>Deny Order</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="denyOrderForm">
+        <input type="hidden" id="deny_order_id" name="order_id" />
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="deny_reason" class="form-label-pv">Reason for denial *</label>
+            <textarea id="deny_reason" name="reason" rows="4" required class="form-control form-control-pv" placeholder="Please specify the reason for denying this order..."></textarea>
+            <div class="invalid-feedback">Reason is required.</div>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-pv btn-danger-pv"><i class="bi bi-x-circle-fill me-1"></i>Submit Denial</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Remove Staff Confirmation Modal -->
+<div class="modal fade" id="removeStaffModal" tabindex="-1" aria-labelledby="removeStaffModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-secondary text-white" style="background:rgba(15,15,30,.98); border-radius:20px; backdrop-filter:blur(20px);">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title fw-700" id="removeStaffModalLabel"><i class="bi bi-exclamation-triangle-fill me-1 text-danger"></i>Remove Staff Member</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to remove this staff member <strong id="remove_staff_name"></strong>?</p>
+      </div>
+      <div class="modal-footer border-secondary">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteStaffBtn" onclick="deleteStaffExecute()">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+<script>
+// Switch panes dynamically without reload
+function switchPane(paneId, element) {
+  // Update sidebar active classes
+  document.querySelectorAll('.sidebar-link').forEach(link => {
+    link.classList.remove('active');
+  });
+  if (element) {
+    element.classList.add('active');
+  } else {
+    const activeLink = document.querySelector(`.sidebar-link[href="#${paneId}"]`);
+    if (activeLink) activeLink.classList.add('active');
+  }
+
+  // Toggle visible pane
+  document.querySelectorAll('.dashboard-pane').forEach(pane => {
+    pane.classList.remove('active-pane');
+  });
+  const targetPane = document.getElementById('pane-' + paneId);
+  if (targetPane) {
+    targetPane.classList.add('active-pane');
+  }
+
+  // Update URL hash without reload
+  window.history.pushState(null, null, '#' + paneId);
+}
+
+// Filter orders inside My Orders pane
+function filterAdminOrders(status, pill) {
+  // Update category pills
+  pill.parentNode.querySelectorAll('.admin-order-pill').forEach(btn => {
+    btn.className = 'btn-pv btn-outline-pv admin-order-pill';
+  });
+  pill.className = 'btn-pv btn-primary-pv admin-order-pill';
+
+  // Filter items
+  const items = document.querySelectorAll('.admin-order-row');
+  items.forEach(item => {
+    if (status === 'All' || item.dataset.status === status) {
+      item.style.display = 'table-row';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+
+// Toggle user status
+function toggleUserStatus(uid, btn) {
+  fetch(`/admin/users/${uid}/toggle`, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      btn.textContent = data.is_active ? 'Disable' : 'Enable';
+      const row = document.getElementById('user-row-' + uid);
+      if (row) {
+        const badge = row.querySelector('.user-status-badge');
+        if (badge) {
+          badge.className = 'badge ' + (data.is_active ? 'bg-success' : 'bg-danger') + ' user-status-badge';
+          badge.textContent = data.is_active ? 'Active' : 'Disabled';
+        }
+      }
+    } else {
+      showToast(data.message, 'danger');
+    }
+  })
+  .catch(err => {
+    console.error('Error toggling user:', err);
+    showToast('Failed to toggle user account status.', 'danger');
+  });
+}
+
+// Delete user
+function deleteUser(uid) {
+  if (confirm('Are you sure you want to delete this user account permanently?')) {
+    fetch(`/admin/users/${uid}/delete`, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        showToast(data.message, 'success');
+        const row = document.getElementById('user-row-' + uid);
+        if (row) row.remove();
+      } else {
+        showToast(data.message, 'danger');
+      }
+    })
+    .catch(err => {
+      console.error('Error deleting user:', err);
+      showToast('Failed to delete user.', 'danger');
+    });
+  }
+}
+
+// Toggle product status
+function toggleProductStatus(pid, btn) {
+  fetch(`/admin/products/${pid}/toggle`, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      btn.textContent = data.is_active ? 'Hide' : 'Show';
+      btn.className = 'btn btn-sm ' + (data.is_active ? 'btn-warning text-dark' : 'btn-success') + ' px-2 py-1 product-toggle-btn';
+      const row = document.getElementById('product-row-' + pid);
+      if (row) {
+        const badge = row.querySelector('.product-status-badge');
+        if (badge) {
+          badge.className = 'badge ' + (data.is_active ? 'bg-success' : 'bg-danger') + ' product-status-badge';
+          badge.textContent = data.is_active ? 'Visible / Active' : 'Deactivated';
+        }
+      }
+    } else {
+      showToast(data.message, 'danger');
+    }
+  })
+  .catch(err => {
+    console.error('Error toggling product:', err);
+    showToast('Failed to toggle product status.', 'danger');
+  });
+}
+
+// Delete product
+function deleteProduct(pid) {
+  if (confirm('Are you sure you want to delete this listing permanently?')) {
+    fetch(`/admin/products/${pid}/delete`, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        showToast(data.message, 'success');
+        const row = document.getElementById('product-row-' + pid);
+        if (row) row.remove();
+      } else {
+        showToast(data.message, 'danger');
+      }
+    })
+    .catch(err => {
+      console.error('Error deleting product:', err);
+      showToast('Failed to delete product.', 'danger');
+    });
+  }
+}
+
+// Open Edit Product Modal
+function openEditProductModal(btn) {
+  const pid = btn.getAttribute('data-id');
+  const name = btn.getAttribute('data-name');
+  const price = btn.getAttribute('data-price');
+  const stock = btn.getAttribute('data-stock');
+  const description = btn.getAttribute('data-desc');
+  const offer = btn.getAttribute('data-offer');
+  const offerDuration = btn.getAttribute('data-offer-duration');
+
+  document.getElementById('ep_id').value = pid;
+  document.getElementById('ep_name').value = name;
+  document.getElementById('ep_price').value = price;
+  document.getElementById('ep_stock').value = stock;
+  document.getElementById('ep_desc').value = description;
+  document.getElementById('ep_offer').value = offer || '';
+  document.getElementById('ep_offer_duration').value = offerDuration || '';
+  document.getElementById('ep_error').style.display = 'none';
+
+  const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
+  modal.show();
+}
+
+// Save Product Edit Form
+function saveProductEdit() {
+  const pid = document.getElementById('ep_id').value;
+  const name = document.getElementById('ep_name').value;
+  const price = document.getElementById('ep_price').value;
+  const stock = document.getElementById('ep_stock').value;
+  const description = document.getElementById('ep_desc').value;
+  const offer = document.getElementById('ep_offer').value;
+  const offerDuration = document.getElementById('ep_offer_duration').value;
+  const errorDiv = document.getElementById('ep_error');
+
+  errorDiv.style.display = 'none';
+
+  if (!name.trim()) {
+    errorDiv.textContent = 'Product name is required.';
+    errorDiv.style.display = 'block';
+    return;
+  }
+  if (!price || parseFloat(price) < 0) {
+    errorDiv.textContent = 'Please enter a valid price.';
+    errorDiv.style.display = 'block';
+    return;
+  }
+  if (!stock || parseInt(stock) < 0) {
+    errorDiv.textContent = 'Please enter a valid stock count.';
+    errorDiv.style.display = 'block';
+    return;
+  }
+
+  const data = {
+    name: name,
+    price: price,
+    stock: stock,
+    description: description,
+    offer: offer || null,
+    offer_duration: offerDuration || null
+  };
+
+  const saveBtn = document.getElementById('saveProductEditBtn');
+  const originalHtml = saveBtn.innerHTML;
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
+
+  fetch(`/admin/products/${pid}/edit`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(res => res.json())
+  .then(resData => {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = originalHtml;
+
+    if (resData.success) {
+      showToast(resData.message, 'success');
+      
+      // Close modal
+      const modalEl = document.getElementById('editProductModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+
+      // Dynamically update the table row for this product
+      const row = document.getElementById('product-row-' + pid);
+      if (row) {
+        const nameCell = row.querySelector('.product-name-cell');
+        const priceCell = row.querySelector('.product-price-cell');
+        const stockCell = row.querySelector('.product-stock-cell');
+        
+        if (nameCell) nameCell.textContent = name;
+        if (priceCell) priceCell.textContent = '₹' + parseFloat(price).toFixed(2);
+        if (stockCell) stockCell.textContent = stock;
+        
+        // Update the data attributes on the edit button
+        const editBtn = row.querySelector('button[data-id]');
+        if (editBtn) {
+          editBtn.setAttribute('data-name', name);
+          editBtn.setAttribute('data-price', price);
+          editBtn.setAttribute('data-stock', stock);
+          editBtn.setAttribute('data-desc', description);
+        }
+      }
+    } else {
+      errorDiv.textContent = resData.message || 'Failed to update product.';
+      errorDiv.style.display = 'block';
+    }
+  })
+  .catch(err => {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = originalHtml;
+    console.error('Error saving product edits:', err);
+    errorDiv.textContent = 'Network error. Please try again.';
+    errorDiv.style.display = 'block';
+  });
+}
+
+// Open admin order details modal
+function openAdminOrderDetails(oid) {
+  const content = document.getElementById('adminOrderModalContent');
+  content.innerHTML = `
+    <div class="modal-body text-center py-5">
+      <div class="spinner-border text-primary-pv" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>`;
+
+  const modal = new bootstrap.Modal(document.getElementById('adminOrderModal'));
+  modal.show();
+
+  fetch(`/admin/order-details/${oid}`)
+    .then(res => res.text())
+    .then(html => {
+      content.innerHTML = html;
+    })
+    .catch(err => {
+      console.error('Error fetching admin order details:', err);
+      content.innerHTML = `
+        <div class="modal-header border-secondary text-white">
+          <h5 class="modal-title">Error</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-danger py-4 text-center">
+          <i class="bi bi-exclamation-triangle display-4 mb-2"></i>
+          <div>Failed to load order data. Please try again.</div>
+        </div>`;
+    });
+}
+
+// Update order status via claim / deny / complete
+function updateOrderStatus(oid, action) {
+  console.log('updateOrderStatus called with oid:', oid, 'action:', action);
+  fetch(`/admin/orders/${oid}/${action}`, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      // Hide modal
+      const modalEl = document.getElementById('adminOrderModal');
+      const modalObj = bootstrap.Modal.getInstance(modalEl);
+      if (modalObj) modalObj.hide();
+
+      // Determine new status display
+      let newStatus = 'Pending';
+      if (action === 'claim') newStatus = 'Claimed';
+      if (action === 'deny') newStatus = 'Denied';
+      if (action === 'complete') newStatus = 'Completed';
+
+      // Update in global journal table
+      const orderRow = document.getElementById('order-row-' + oid);
+      if (orderRow) {
+        orderRow.dataset.status = newStatus;
+        const badge = orderRow.querySelector('.order-badge-element');
+        if (badge) {
+          badge.className = 'status-badge badge-' + newStatus.toLowerCase() + ' order-badge-element';
+          badge.textContent = newStatus;
+        }
+      }
+
+      // Update in recent activity rows
+      const recentRow = document.getElementById('recent-row-' + oid);
+      if (recentRow) {
+        const badge = recentRow.querySelector('.order-badge-element');
+        if (badge) {
+          badge.className = 'status-badge badge-' + newStatus.toLowerCase() + ' order-badge-element';
+          badge.textContent = newStatus;
+        }
+      }
+      
+      // Reload stats & charts
+      loadAdminAnalytics();
+      updateKpiCards();
+    } else {
+      showToast(data.message, 'danger');
+    }
+  })
+  .catch(err => {
+    console.error('Error updating order status:', err);
+    showToast('Failed to execute order action.', 'danger');
+  });
+}
+
+// Dynamic KPI cards updates
+function updateKpiCards() {
+  fetch('/admin/analytics/data')
+  .then(res => res.json())
+  .then(data => {
+    // Collect status count sums
+    let pending = 0, claimed = 0, denied = 0, completed = 0, cancelled = 0;
+    const labels = data.status_dist.labels;
+    const values = data.status_dist.data;
+    for(let i=0; i<labels.length; i++) {
+      if (labels[i] === 'Pending') pending = values[i];
+      if (labels[i] === 'Claimed') claimed = values[i];
+      if (labels[i] === 'Denied') denied = values[i];
+      if (labels[i] === 'Completed') completed = values[i];
+      if (labels[i] === 'Cancelled') cancelled = values[i];
+    }
+    
+    document.getElementById('kpi-pending').textContent = pending;
+    document.getElementById('kpi-claimed').textContent = claimed;
+    document.getElementById('kpi-denied').textContent = denied;
+    document.getElementById('kpi-completed').textContent = completed;
+    document.getElementById('kpi-cancelled').textContent = cancelled;
+    
+    let total = pending + claimed + denied + completed + cancelled;
+    document.getElementById('kpi-orders').textContent = total;
+  });
+}
+
+// Add Category
+document.getElementById('addCategoryForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const form = this;
+  const formData = new FormData(form);
+
+  fetch('/admin/categories/add', {
+    method: 'POST',
+    body: formData,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      form.reset();
+      
+      // Dynamically add category row
+      const tbody = document.getElementById('categories-table-body');
+      const row = document.createElement('tr');
+      row.id = 'cat-row-' + data.id;
+      row.innerHTML = `
+        <td><i class="bi ${data.icon} text-primary-pv" style="font-size:1.2rem;"></i></td>
+        <td class="fw-semibold">${data.name}</td>
+        <td class="text-muted font-monospace">${data.slug}</td>
+        <td class="text-end">
+          <button onclick="deleteCategory(${data.id})" class="btn btn-danger btn-sm px-2 py-1"><i class="bi bi-trash"></i></button>
+        </td>`;
+      tbody.appendChild(row);
+    } else {
+      showToast(data.message, 'danger');
+    }
+  })
+  .catch(err => {
+    console.error('Error adding category:', err);
+    showToast('Failed to add category.', 'danger');
+  });
+});
+
+// Delete Category
+function deleteCategory(cid) {
+  if (confirm('Are you sure you want to delete this category?')) {
+    fetch(`/admin/categories/${cid}/delete`, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        showToast(data.message, 'success');
+        const row = document.getElementById('cat-row-' + cid);
+        if (row) row.remove();
+      } else {
+        showToast(data.message, 'danger');
+      }
+    })
+    .catch(err => {
+      console.error('Error deleting category:', err);
+      showToast('Failed to delete category.', 'danger');
+    });
+  }
+}
+
+// Add Staff
+function clearStaffAddForm() {
+  document.getElementById('addStaffForm').reset();
+}
+
+// Add Staff Form Submit - REMOVED to allow direct form submission
+
+// Toggle Staff Visibility
+function toggleStaffVisibility(sid, btn) {
+  fetch(`/admin/staff/${sid}/toggle`, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      const icon = btn.querySelector('i');
+      if (data.is_active) {
+        icon.className = 'bi bi-eye-fill';
+      } else {
+        icon.className = 'bi bi-eye-slash-fill';
+      }
+      const card = document.getElementById('staff-card-' + sid);
+      if (card) {
+        const badge = card.querySelector('.staff-badge-element');
+        if (badge) {
+          badge.className = 'badge ' + (data.is_active ? 'bg-success' : 'bg-danger') + ' staff-badge-element';
+          badge.textContent = data.is_active ? 'Active Visibility' : 'Hidden';
+        }
+      }
+    } else {
+      showToast(data.message, 'danger');
+    }
+  })
+  .catch(err => {
+    console.error('Error toggling staff visibility:', err);
+    showToast('Failed to toggle staff visibility.', 'danger');
+  });
+}
+
+// Delete Staff modal and execute
+let staffIdToDelete = null;
+
+function confirmDeleteStaff(sid, name) {
+  staffIdToDelete = sid;
+  document.getElementById('remove_staff_name').textContent = name;
+  const modal = new bootstrap.Modal(document.getElementById('removeStaffModal'));
+  modal.show();
+}
+
+function deleteStaffExecute() {
+  if (!staffIdToDelete) return;
+  
+  fetch(`/admin/staff/${staffIdToDelete}/delete`, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      
+      const modalEl = document.getElementById('removeStaffModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+      
+      fetchStaffDirectory();
+      
+      const kpi = document.getElementById('kpi-staff');
+      if (kpi) kpi.textContent = Math.max(0, parseInt(kpi.textContent) - 1);
+    } else {
+      showToast(data.message, 'danger');
+    }
+  })
+  .catch(err => {
+    console.error('Error deleting staff:', err);
+    showToast('Failed to remove staff member.', 'danger');
+  });
+}
+
+// Preview photo for staff edit
+function previewStaffPhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('edit_st_avatar_preview').src = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+// Update bio character counter
+function updateBioCounter(textarea) {
+  const len = textarea.value.length;
+  document.getElementById('edit_st_bio_counter').textContent = `${len} / 1000`;
+}
+
+// Open Edit Staff Modal
+function openEditStaffModal(sid) {
+  // Set form action with the correct staff ID
+  const form = document.getElementById('editStaffForm');
+  form.action = `/admin/staff/${sid}/edit`;
+  
+  fetch(`/admin/staff/${sid}`, {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      document.getElementById('edit_st_id').value = data.id;
+      document.getElementById('edit_st_name').value = data.full_name;
+      document.getElementById('edit_st_pos').value = data.position;
+      document.getElementById('edit_st_dep').value = data.department;
+      document.getElementById('edit_st_email').value = data.email;
+      document.getElementById('edit_st_phone').value = data.phone;
+      document.getElementById('edit_st_bio').value = data.biography;
+      document.getElementById('edit_st_date').value = data.joining_date;
+      
+      // Update avatar preview
+      const previewImg = document.getElementById('edit_st_avatar_preview');
+      if (previewImg) {
+        previewImg.src = data.photo ? `/static/uploads/${data.photo}` : '/static/uploads/default_avatar.png';
+      }
+      
+      // Reset file input value
+      document.getElementById('edit_st_photo').value = '';
+      
+      // Update bio character counter
+      const bioTextarea = document.getElementById('edit_st_bio');
+      if (bioTextarea) {
+        updateBioCounter(bioTextarea);
+      }
+      
+      const modal = new bootstrap.Modal(document.getElementById('editStaffModal'));
+      modal.show();
+    } else {
+      showToast('Failed to load staff details.', 'danger');
+    }
+  })
+  .catch(err => {
+    console.error('Error fetching staff parameters:', err);
+    showToast('Failed to load staff details.', 'danger');
+  });
+}
+
+// Edit Staff Form Submit - REMOVED to allow direct form submission
+
+// Staff search, filter, sort and pagination dynamic handling
+let currentStaffPage = 1;
+
+function fetchStaffDirectory() {
+  const searchInput = document.getElementById('staffSearch');
+  const deptSelect = document.getElementById('staffFilterDept');
+  const posSelect = document.getElementById('staffFilterPos');
+  const sortSelect = document.getElementById('staffSort');
+  
+  const q = searchInput ? searchInput.value : '';
+  const dept = deptSelect ? deptSelect.value : '';
+  const pos = posSelect ? posSelect.value : '';
+  const sort = sortSelect ? sortSelect.value : 'newest';
+  
+  const grid = document.getElementById('staff-directory-grid');
+  if (grid) {
+    grid.innerHTML = `
+      <div class="col-12 text-center py-5">
+        <div class="spinner-border text-primary-pv" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>`;
+  }
+  
+  const url = `/admin/staff/list?q=${encodeURIComponent(q)}&department=${encodeURIComponent(dept)}&position=${encodeURIComponent(pos)}&sort=${sort}&page=${currentStaffPage}`;
+  
+  fetch(url, {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      renderStaffGrid(data.staff);
+      renderStaffPagination(data.pagination);
+    }
+  })
+  .catch(err => {
+    console.error('Error fetching staff directory:', err);
+    if (grid) {
+      grid.innerHTML = '<div class="col-12 text-center py-5 text-danger">Failed to load staff list.</div>';
+    }
+  });
+}
+
+function renderStaffGrid(staffList) {
+  const grid = document.getElementById('staff-directory-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  
+  if (staffList.length === 0) {
+    grid.innerHTML = '<div class="col-12 text-center py-5 text-secondary-pv">No staff members found.</div>';
+    return;
+  }
+  
+  staffList.forEach(s => {
+    const photoUrl = s.photo ? `/static/uploads/${s.photo}` : '/static/uploads/default_avatar.png';
+    const cardHtml = `
+      <div class="col-md-6 col-lg-4" id="staff-card-${s.id}">
+        <div class="testimonial-card text-center h-100 position-relative p-4 border border-secondary" style="background:rgba(15,15,30,0.4); border-radius:20px;">
+          <div class="position-absolute top-0 end-0 p-2 d-flex gap-1">
+            <!-- Toggle Visibility -->
+            <button class="btn btn-glass btn-sm border-0 py-1 px-2 text-warning staff-visibility-btn" onclick="toggleStaffVisibility(${s.id}, this)">
+              <i class="bi ${s.is_active ? 'bi-eye-fill' : 'bi-eye-slash-fill'}" style="font-size:1.1rem;"></i>
+            </button>
+            <!-- Edit Button -->
+            <button class="btn btn-glass btn-sm border-0 py-1 px-2 text-primary-pv" onclick="openEditStaffModal(${s.id})">
+              <i class="bi bi-pencil-square" style="font-size:1.1rem;"></i>
+            </button>
+            <!-- Delete Button -->
+            <button class="btn btn-glass btn-sm border-0 py-1 px-2 text-danger" onclick="confirmDeleteStaff(${s.id}, '${s.full_name.replace(/'/g, "\\'")}')">
+              <i class="bi bi-trash-fill" style="font-size:1.1rem;"></i>
+            </button>
+          </div>
+
+          <div class="mb-3 text-center pt-2">
+            <img src="${photoUrl}" alt="${s.full_name}" class="staff-photo-preview"
+                 style="width:90px; height:90px; object-fit:cover; border-radius:50%; border:2px solid var(--primary-light);"
+                 onerror="this.onerror=null; this.src='/static/uploads/default_avatar.png';"/>
+          </div>
+          <h5 class="fw-700 mb-1 staff-card-name">${s.full_name}</h5>
+          <div class="mb-2 staff-card-pos" style="color:var(--primary-light);font-size:.85rem;font-weight:600;">${s.position} | <span class="text-secondary">${s.department || 'General'}</span></div>
+          <div class="small text-muted mb-2 font-monospace" style="font-size: 0.75rem;">
+            <i class="bi bi-envelope me-1"></i>${s.email || 'No Email'}<br/>
+            <i class="bi bi-calendar-event me-1"></i>Joined: ${s.joining_date}
+          </div>
+          <p class="staff-card-bio text-secondary-pv small mb-0" style="line-height:1.6; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">${s.biography || ''}</p>
+          <div class="mt-2 text-center">
+            <span class="badge ${s.is_active ? 'bg-success' : 'bg-danger'} staff-badge-element">
+              ${s.is_active ? 'Active Visibility' : 'Hidden'}
+            </span>
+          </div>
+        </div>
+      </div>
+    `;
+    grid.insertAdjacentHTML('beforeend', cardHtml);
+  });
+}
+
+function renderStaffPagination(pagination) {
+  const info = document.getElementById('staffPaginationInfo');
+  const paginationUl = document.getElementById('staffPagination');
+  if (!info || !paginationUl) return;
+  paginationUl.innerHTML = '';
+  
+  if (pagination.total === 0) {
+    info.textContent = 'Showing 0 entries';
+    return;
+  }
+  
+  const startEntry = (pagination.page - 1) * pagination.per_page + 1;
+  const endEntry = Math.min(startEntry + pagination.per_page - 1, pagination.total);
+  info.textContent = `Showing ${startEntry}-${endEntry} of ${pagination.total} entries`;
+  
+  const prevClass = pagination.has_prev ? '' : 'disabled';
+  paginationUl.insertAdjacentHTML('beforeend', `
+    <li class="page-item ${prevClass}">
+      <a class="page-link" href="#" onclick="changeStaffPage(event, ${pagination.page - 1})"><i class="bi bi-chevron-left"></i></a>
+    </li>
+  `);
+  
+  for (let i = 1; i <= pagination.pages; i++) {
+    const activeClass = i === pagination.page ? 'active' : '';
+    paginationUl.insertAdjacentHTML('beforeend', `
+      <li class="page-item ${activeClass}">
+        <a class="page-link" href="#" onclick="changeStaffPage(event, ${i})">${i}</a>
+      </li>
+    `);
+  }
+  
+  const nextClass = pagination.has_next ? '' : 'disabled';
+  paginationUl.insertAdjacentHTML('beforeend', `
+    <li class="page-item ${nextClass}">
+      <a class="page-link" href="#" onclick="changeStaffPage(event, ${pagination.page + 1})"><i class="bi bi-chevron-right"></i></a>
+    </li>
+  `);
+}
+
+function changeStaffPage(event, page) {
+  event.preventDefault();
+  currentStaffPage = page;
+  fetchStaffDirectory();
+}
+
+// Open Deny Order Modal - sets deny form values and switches modals
+function openDenyOrderModal(oid) {
+  document.getElementById('deny_order_id').value = oid;
+  document.getElementById('deny_reason').value = '';
+  
+  const detailsEl = document.getElementById('adminOrderModal');
+  const detailsModal = bootstrap.Modal.getInstance(detailsEl);
+  if (detailsModal) detailsModal.hide();
+  
+  const modal = new bootstrap.Modal(document.getElementById('denyOrderModal'));
+  modal.show();
+}
+
+// Deny Order Form Submit - REMOVED to allow direct form submission
+
+// Admin Profile settings update
+document.getElementById('adminProfileForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const form = this;
+  const formData = new FormData(form);
+
+  if (formData.get('new_password') && formData.get('new_password') !== formData.get('confirm_password')) {
+    showToast('New passwords do not match.', 'danger');
+    return;
+  }
+
+  fetch('/admin/profile/update', {
+    method: 'POST',
+    body: formData,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      document.getElementById('adm_curr_pass').value = '';
+      document.getElementById('adm_new_pass').value = '';
+      document.getElementById('adm_conf_pass').value = '';
+      
+      setTimeout(() => {
+        window.location.hash = '#profile';
+        window.location.reload();
+      }, 1000);
+    } else {
+      showToast(data.message, 'danger');
+    }
+  })
+  .catch(err => {
+    console.error('Error updating admin profile:', err);
+    showToast('An error occurred. Please check password parameters.', 'danger');
+  });
+});
+
+// Toast helper
+function showToast(message, category = 'info') {
+  const container = document.querySelector('.position-fixed.top-0.end-0');
+  if (!container) return;
+  
+  const icons = {
+    'success': 'bi-check-circle-fill text-success',
+    'danger': 'bi-exclamation-circle-fill text-danger',
+    'warning': 'bi-exclamation-triangle-fill text-warning',
+    'info': 'bi-info-circle-fill text-info'
+  };
+  
+  const toastHtml = `
+    <div class="toast show align-items-center border-0 mb-2" role="alert" style="background:rgba(15,15,30,.95);border:1px solid rgba(255,255,255,.1) !important;border-radius:14px;backdrop-filter:blur(20px);">
+      <div class="d-flex">
+        <div class="toast-body text-white d-flex align-items-center gap-2">
+          <i class="bi ${icons[category] || icons['info']}"></i>
+          ${message}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>`;
+  
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = toastHtml;
+  const element = wrapper.firstElementChild;
+  container.appendChild(element);
+  
+  setTimeout(() => {
+    element.remove();
+  }, 4000);
+}
+
+// Order Management Functions
+function openAdminOrderDetails(oid) {
+  const modal = new bootstrap.Modal(document.getElementById('adminOrderModal'));
+  const contentDiv = document.getElementById('adminOrderModalContent');
+  
+  contentDiv.innerHTML = `
+    <div class="modal-body text-center py-5">
+      <div class="spinner-border text-primary-pv" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>`;
+  
+  modal.show();
+  
+  fetch(`/admin/order-details/${oid}`)
+    .then(res => res.text())
+    .then(html => {
+      contentDiv.innerHTML = html;
+    })
+    .catch(err => {
+      console.error('Error loading order details:', err);
+      contentDiv.innerHTML = `
+        <div class="modal-body text-center py-5">
+          <p class="text-danger">Failed to load order details.</p>
+        </div>`;
+    });
+}
+
+function claimOrder(oid) {
+  if (!confirm('Are you sure you want to claim this order?')) return;
+  
+  fetch(`/admin/orders/${oid}/claim`, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      const modal = bootstrap.Modal.getInstance(document.getElementById('adminOrderModal'));
+      if (modal) modal.hide();
+      location.reload();
+    } else {
+      showToast(data.message, 'danger');
+    }
+  })
+  .catch(err => {
+    console.error('Error claiming order:', err);
+    showToast('Failed to claim order.', 'danger');
+  });
+}
+
+function completeOrder(oid) {
+  if (!confirm('Are you sure you want to mark this order as completed?')) return;
+  
+  fetch(`/admin/orders/${oid}/complete`, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      const modal = bootstrap.Modal.getInstance(document.getElementById('adminOrderModal'));
+      if (modal) modal.hide();
+      location.reload();
+    } else {
+      showToast(data.message, 'danger');
+    }
+  })
+  .catch(err => {
+    console.error('Error completing order:', err);
+    showToast('Failed to complete order.', 'danger');
+  });
+}
+
+
+// Deny Order Form Submit (AJAX)
+document.getElementById('denyOrderForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const oid = document.getElementById('deny_order_id').value;
+  const reason = document.getElementById('deny_reason').value;
+  
+  if (!reason.trim()) {
+    showToast('Reason for denial is required.', 'danger');
+    return;
+  }
+  
+  fetch(`/admin/orders/${oid}/deny`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    body: JSON.stringify({ reason: reason })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      const modal = bootstrap.Modal.getInstance(document.getElementById('denyOrderModal'));
+      if (modal) modal.hide();
+      location.reload();
+    } else {
+      showToast(data.message, 'danger');
+    }
+  })
+  .catch(err => {
+    console.error('Error denying order:', err);
+    showToast('Failed to deny order.', 'danger');
+  });
+});
+
+// Add Staff Form Submit
+document.getElementById('addStaffForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const formData = new FormData(this);
+  
+  fetch('/admin/staff/add', {
+    method: 'POST',
+    body: formData,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      this.reset();
+      const modal = bootstrap.Modal.getInstance(document.getElementById('addStaffModal'));
+      if (modal) modal.hide();
+      fetchStaffDirectory();
+    } else {
+      showToast(data.message, 'danger');
+    }
+  })
+  .catch(err => {
+    console.error('Error adding staff:', err);
+    showToast('Failed to add staff.', 'danger');
+  });
+});
+
+// Edit Staff Form Submit
+document.getElementById('editStaffForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const sid = document.getElementById('edit_st_id').value;
+  const formData = new FormData(this);
+  
+  fetch(`/admin/staff/${sid}/edit`, {
+    method: 'POST',
+    body: formData,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      const modal = bootstrap.Modal.getInstance(document.getElementById('editStaffModal'));
+      if (modal) modal.hide();
+      fetchStaffDirectory();
+    } else {
+      showToast(data.message, 'danger');
+    }
+  })
+  .catch(err => {
+    console.error('Error editing staff:', err);
+    showToast('Failed to edit staff.', 'danger');
+  });
+});
+
+// Chart.js and tab loading
+document.addEventListener('DOMContentLoaded', () => { 
+  loadAdminAnalytics(); 
+  fetchStaffDirectory();
+  
+  const hash = window.location.hash.substring(1);
+  if (hash) {
+    if (hash.startsWith('order-')) {
+      const oid = hash.split('-')[1];
+      switchPane('orders');
+      openAdminOrderDetails(oid);
+    } else {
+      switchPane(hash);
+    }
+  }
+});
+
+// Listen to hash and popstate changes for back/forward navigation support
+window.addEventListener('hashchange', () => {
+  const hash = window.location.hash.substring(1);
+  if (hash) {
+    if (hash.startsWith('order-')) {
+      const oid = hash.split('-')[1];
+      switchPane('orders');
+      openAdminOrderDetails(oid);
+    } else {
+      switchPane(hash);
+    }
+  }
+});
+
+window.addEventListener('popstate', () => {
+  const hash = window.location.hash.substring(1);
+  if (hash) {
+    if (hash.startsWith('order-')) {
+      const oid = hash.split('-')[1];
+      switchPane('orders');
+      openAdminOrderDetails(oid);
+    } else {
+      switchPane(hash);
+    }
+  } else {
+    switchPane('dashboard');
+  }
+});
+</script>
+{% endblock %}

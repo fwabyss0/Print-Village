@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Submit Order Feedback{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center py-5"
+     style="background:radial-gradient(ellipse 80% 60% at 70% 50%, rgba(255,101,132,.10) 0%, transparent 60%);">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6">
+
+        <div class="form-pv">
+          <div class="text-center mb-4">
+            <i class="bi bi-chat-heart text-primary-pv display-4 mb-3 d-inline-block"></i>
+            <h1 class="h3 mb-1">Your Feedback Matters</h1>
+            <p style="color:var(--text-secondary);">Tell us about your experience with Order #{{ order.id }}</p>
+          </div>
+
+          {% if existing %}
+            <div class="alert alert-warning text-center border-secondary text-white" style="background:rgba(245,158,11,.15);">
+              <i class="bi bi-exclamation-triangle me-1"></i> Feedback has already been submitted for this order.
+            </div>
+            <div class="text-center mt-3">
+              <a href="/" class="btn-pv btn-glass">Back to Homepage</a>
+            </div>
+          {% else %}
+            <form method="POST" novalidate>
+              <div class="mb-4 text-center">
+                <label class="form-label-pv mb-3">Overall Satisfaction</label>
+                <div class="d-flex justify-content-center gap-3">
+                  <!-- Star Rating selectors -->
+                  {% for val, text in [(5, 'Excellent'), (4, 'Good'), (3, 'Average'), (2, 'Poor'), (1, 'Very Bad')] %}
+                    <label style="cursor: pointer;">
+                      <input type="radio" name="rating" value="{{ val }}" class="d-none" {% if val == 5 %}checked{% endif %}/>
+                      <div class="text-center p-2 rounded star-option" style="width: 70px; border: 1px solid var(--border-glass); background:rgba(255,255,255,0.02); transition: all .2s;">
+                        <i class="bi bi-star-fill text-muted star-icon-element" style="font-size: 1.5rem;"></i>
+                        <small class="d-block mt-1 text-muted" style="font-size: 0.7rem;">{{ text }}</small>
+                      </div>
+                    </label>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label for="comments" class="form-label-pv">Comments / Suggestions</label>
+                <textarea id="comments" name="comments" rows="5" required
+                          class="form-control form-control-pv"
+                          placeholder="Tell us what you liked, or where we can improve..."></textarea>
+              </div>
+
+              <button type="submit" class="btn-pv btn-primary-pv w-100 justify-content-center">
+                <i class="bi bi-send-fill me-1"></i> Submit Feedback
+              </button>
+            </form>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('input[name="rating"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    document.querySelectorAll('.star-option').forEach(opt => {
+      opt.style.borderColor = 'var(--border-glass)';
+      opt.style.background = 'rgba(255,255,255,0.02)';
+      const star = opt.querySelector('.star-icon-element');
+      star.className = 'bi bi-star-fill text-muted';
+      const label = opt.querySelector('small');
+      label.className = 'd-block mt-1 text-muted';
+    });
+    
+    // Highlight the selected rating
+    const selectedDiv = radio.closest('label').querySelector('.star-option');
+    selectedDiv.style.borderColor = '#6C63FF';
+    selectedDiv.style.background = 'rgba(108,99,255,0.1)';
+    const star = selectedDiv.querySelector('.star-icon-element');
+    star.className = 'bi bi-star-fill text-warning';
+    const label = selectedDiv.querySelector('small');
+    label.className = 'd-block mt-1 text-white fw-bold';
+  });
+});
+
+// Trigger initial highlight for checked option
+document.querySelector('input[name="rating"]:checked').dispatchEvent(new Event('change'));
+</script>
+{% endblock %}

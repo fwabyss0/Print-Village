@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Manage Staff{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="dashboard-layout">
+    {% from "admin/_sidebar.html" import admin_sidebar %}
+    {{ admin_sidebar(active='staff') }}
+    <main class="dashboard-main">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-white fw-bold"><i class="bi bi-people me-2 text-primary-pv"></i>Staff Management</h1>
+        <button class="btn-pv btn-primary-pv" data-bs-toggle="modal" data-bs-target="#editStaffModal" onclick="clearStaffModal()"><i class="bi bi-plus-lg me-1"></i>Add Staff</button>
+      </div>
+      {% if staff %}
+      <div class="table-responsive">
+        <table class="table table-dark table-hover mb-0 text-white align-middle">
+          <thead>
+            <tr class="text-secondary-pv border-secondary">
+              <th class="ps-4">Name</th>
+              <th>Position</th>
+              <th>Department</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th class="pe-4 text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in staff %}
+            <tr class="border-secondary" data-id="{{ s.id }}" data-name="{{ s.full_name }}" data-pos="{{ s.position }}" data-dep="{{ s.department }}" data-email="{{ s.email }}" data-phone="{{ s.phone }}" data-bio="{{ s.biography }}" data-joining="{{ s.joining_date }}" data-photo="{{ s.photo }}">
+              <td class="ps-4 text-muted">{{ s.full_name }}</td>
+              <td>{{ s.position }}</td>
+              <td>{{ s.department }}</td>
+              <td>{{ s.email }}</td>
+              <td>{{ s.phone }}</td>
+              <td class="pe-4 text-end">
+                <button class="btn-pv btn-outline-pv btn-sm-pv me-2" data-bs-toggle="modal" data-bs-target="#editStaffModal" onclick="populateStaffModal(this.parentNode.parentNode)"><i class="bi bi-pencil-square"></i></button>
+                <button class="btn-pv btn-danger-pv btn-sm-pv" onclick="deleteStaff({{ s.id }})"><i class="bi bi-trash"></i></button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-secondary-pv">
+        <p>No staff members found.</p>
+      </div>
+      {% endif %}
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function clearStaffModal() {
+  document.getElementById('edit_st_id').value = '';
+  document.getElementById('edit_st_name').value = '';
+  document.getElementById('edit_st_pos').value = '';
+  document.getElementById('edit_st_dep').value = '';
+  document.getElementById('edit_st_email').value = '';
+  document.getElementById('edit_st_phone').value = '';
+  document.getElementById('edit_st_date').value = '';
+  document.getElementById('edit_st_bio').value = '';
+  document.getElementById('edit_st_photo').value = '';
+}
+function populateStaffModal(row) {
+  document.getElementById('edit_st_id').value = row.dataset.id;
+  document.getElementById('edit_st_name').value = row.dataset.name || '';
+  document.getElementById('edit_st_pos').value = row.dataset.pos || '';
+  document.getElementById('edit_st_dep').value = row.dataset.dep || '';
+  document.getElementById('edit_st_email').value = row.dataset.email || '';
+  document.getElementById('edit_st_phone').value = row.dataset.phone || '';
+  document.getElementById('edit_st_date').value = row.dataset.joining || '';
+  document.getElementById('edit_st_bio').value = row.dataset.bio || '';
+}
+function deleteStaff(sid) {
+  if (!confirm('Delete this staff member?')) return;
+  fetch(`/admin/staff/${sid}/delete`, {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}})
+    .then(r=>r.json())
+    .then(d=>{ if(d.success){ location.reload(); } else { alert(d.message); } })
+    .catch(e=>alert('Error: '+e));
+}
+</script>
+{% endblock %}

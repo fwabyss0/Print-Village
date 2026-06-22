@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}My Favorites{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1 class="section-title">My Favorites</h1>
+    <p style="color:var(--text-muted);">Products you've saved for later</p>
+  </div>
+</div>
+
+<div class="container pb-5">
+  {% if products %}
+  <div class="row g-4">
+    {% for product in products %}
+    <div class="col-sm-6 col-md-4 col-lg-3 animate-fade-up">
+      <div class="product-card h-100">
+        <div class="product-card-img-wrap">
+          {% if product.primary_image %}
+            <img src="{{ url_for('static', filename='uploads/' + product.primary_image) }}"
+                 alt="{{ product.name }}" class="product-card-img"/>
+          {% else %}
+            <div class="product-card-img d-flex align-items-center justify-content-center"
+                 style="background:linear-gradient(135deg,rgba(108,99,255,.15),rgba(255,101,132,.1));">
+              <i class="bi bi-image" style="font-size:3rem;color:var(--text-muted);"></i>
+            </div>
+          {% endif %}
+          <span class="product-card-badge">{{ product.category.name }}</span>
+          <button class="product-card-fav active"
+                  id="fav-{{ product.id }}"
+                  onclick="toggleFav({{ product.id }}, this)"
+                  title="Remove from favorites">
+            <i class="bi bi-heart-fill"></i>
+          </button>
+        </div>
+        <div class="product-card-body d-flex flex-column">
+          <h6 class="fw-600 mb-1">{{ product.name }}</h6>
+          <p style="color:var(--text-muted);font-size:.82rem;line-height:1.5;flex-grow:1;">
+            {{ product.description[:70] ~ '...' if product.description and product.description|length > 70 else product.description }}
+          </p>
+          <div class="d-flex align-items-center justify-content-between mt-2">
+            <span class="product-price">₹{{ "%.0f"|format(product.price) }}</span>
+            <a href="{{ url_for('buyer.product_detail', pid=product.id) }}"
+               class="btn-pv btn-primary-pv btn-sm-pv">Confirm Order</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <div style="font-size:5rem;margin-bottom:1rem;">💔</div>
+    <h3 class="fw-700 mb-2">No Favorites Yet</h3>
+    <p style="color:var(--text-muted);">Browse products and tap the heart icon to save them here.</p>
+    <a href="{{ url_for('buyer.products') }}" class="btn-pv btn-primary-pv mt-3">
+      <i class="bi bi-bag-heart"></i> Browse Products
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleFav(pid, btn) {
+  fetch(`/buyer/favorite/${pid}`, {method:'POST'})
+    .then(r => r.json())
+    .then(d => {
+      if (!d.favorited) {
+        btn.closest('.col-sm-6').remove();
+      }
+    });
+}
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';} });
+}, {threshold:0.05});
+document.querySelectorAll('.animate-fade-up').forEach((el,i)=>{
+  el.style.opacity='0'; el.style.transform='translateY(30px)';
+  el.style.transition=`opacity .5s ease ${i*.05}s, transform .5s ease ${i*.05}s`;
+  observer.observe(el);
+});
+</script>
+{% endblock %}

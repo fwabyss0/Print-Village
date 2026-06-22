@@ -1,0 +1,447 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Zoom Container ─────────────────────────── */
+  .pv-zoom-wrap {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    border: 1px solid var(--border-glass);
+    cursor: crosshair;
+  }
+  .pv-zoom-wrap img.pv-zoom-main {
+    width: 100%;
+    height: 420px;
+    object-fit: cover;
+    display: block;
+    transition: opacity .2s;
+  }
+
+  /* Magnifier lens circle */
+  .pv-zoom-lens {
+    display: none;
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    border: 3px solid var(--primary-light, #6c63ff);
+    box-shadow: 0 0 0 4px rgba(108,99,255,0.2), 0 8px 32px rgba(0,0,0,0.5);
+    pointer-events: none;
+    background-repeat: no-repeat;
+    z-index: 10;
+    transition: opacity .15s;
+    opacity: 0;
+  }
+  .pv-zoom-wrap:hover .pv-zoom-lens {
+    display: block;
+    opacity: 1;
+  }
+
+  /* Thumbnails */
+  .pv-thumb-strip {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin-top: .75rem;
+  }
+  .pv-thumb {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid var(--border-glass);
+    background: var(--bg-glass);
+    cursor: pointer;
+    transition: all .25s;
+    opacity: .6;
+  }
+  .pv-thumb:hover,
+  .pv-thumb.active-thumb {
+    border-color: var(--primary-light, #6c63ff);
+    box-shadow: 0 0 12px rgba(108,99,255,0.45);
+    opacity: 1;
+    transform: scale(1.08);
+  }
+
+  /* Hint badge */
+  .pv-zoom-hint {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: .72rem;
+    padding: .3rem .7rem;
+    border-radius: 8px;
+    pointer-events: none;
+    z-index: 5;
+    transition: opacity .3s;
+  }
+  .pv-zoom-wrap:hover .pv-zoom-hint { opacity: 0; }
+
+  @media (max-width: 768px) {
+    .pv-zoom-wrap { cursor: default; }
+    .pv-zoom-lens { display: none !important; }
+    .pv-zoom-hint { display: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb" style="background:none;padding:0;">
+      <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" style="color:var(--text-muted);">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('buyer.products') }}" style="color:var(--text-muted);">Products</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('buyer.products') }}?category={{ product.category.slug }}" style="color:var(--text-muted);">{{ product.category.name }}</a></li>
+      <li class="breadcrumb-item active" style="color:var(--text-primary);">{{ product.name }}</li>
+    </ol>
+  </nav>
+
+  <div class="row g-5">
+
+    <!-- Product Images -->
+    <div class="col-lg-5">
+      {% if product.images %}
+        <!-- Zoom-on-hover container -->
+        <div class="pv-zoom-wrap" id="zoomWrap">
+          <img src="{{ url_for('static', filename='uploads/' + product.images[0].filename) }}"
+               alt="{{ product.name }}"
+               class="pv-zoom-main" id="zoomMainImg" />
+          <div class="pv-zoom-lens" id="zoomLens"></div>
+          <span class="pv-zoom-hint"><i class="bi bi-search me-1"></i>Hover to zoom</span>
+        </div>
+
+        {% if product.images|length > 1 %}
+        <div class="pv-thumb-strip">
+          {% for img in product.images %}
+          <img src="{{ url_for('static', filename='uploads/' + img.filename) }}"
+               alt="Thumbnail {{ loop.index }}"
+               data-full="{{ url_for('static', filename='uploads/' + img.filename) }}"
+               class="pv-thumb {% if loop.first %}active-thumb{% endif %}"
+               onclick="switchZoomImage(this)" />
+          {% endfor %}
+        </div>
+        {% endif %}
+
+      {% else %}
+        <div style="height:420px;background:linear-gradient(135deg,rgba(108,99,255,.15),rgba(255,101,132,.1));
+                     border-radius:20px;display:flex;align-items:center;justify-content:center;
+                     border:1px solid var(--border-glass);">
+          <i class="bi bi-image" style="font-size:5rem;color:var(--text-muted);"></i>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Product Info -->
+    <div class="col-lg-7">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <a href="{{ url_for('buyer.products') }}?category={{ product.category.slug }}"
+           class="category-pill">
+          <i class="bi {{ product.category.icon }}"></i> {{ product.category.name }}
+        </a>
+        <span style="color:var(--text-muted);font-size:.82rem;">
+          <i class="bi bi-eye me-1"></i>{{ product.views }} views
+        </span>
+      </div>
+
+      <h1 class="h2 fw-800 mb-3">{{ product.name }}</h1>
+
+      <div class="mb-3">
+        {% if product.is_offer_active %}
+          <div class="d-flex align-items-center gap-3 flex-wrap">
+            <span class="product-price" style="font-size:2rem;color:var(--accent);">₹{{ "%.0f"|format(product.discounted_price) }}</span>
+            <span style="text-decoration:line-through;font-size:1.2rem;color:var(--text-muted);">₹{{ "%.0f"|format(product.price) }}</span>
+            <span style="background:linear-gradient(135deg,var(--accent),var(--danger));color:#fff;font-size:.7rem;font-weight:800;padding:4px 10px;border-radius:100px;letter-spacing:.05em;text-transform:uppercase;">SALE</span>
+          </div>
+        {% else %}
+          <span class="product-price" style="font-size:2rem;">₹{{ "%.0f"|format(product.price) }}</span>
+        {% endif %}
+        <span style="color:var(--text-muted);font-size:.9rem;margin-left:.5rem;">/ unit</span>
+      </div>
+
+      <div class="mb-3" style="color:{% if product.stock > 20 %}var(--success){% elif product.stock > 0 %}var(--warning){% else %}var(--danger){% endif %};font-weight:600;">
+        <i class="bi bi-{% if product.stock > 0 %}check-circle-fill{% else %}x-circle-fill{% endif %} me-1"></i>
+        {% if product.stock > 20 %}In Stock ({{ product.stock }} available)
+        {% elif product.stock > 0 %}Low Stock ({{ product.stock }} left)
+        {% else %}Out of Stock{% endif %}
+      </div>
+
+      {% if product.description %}
+      <div class="mb-4">
+        <h6 class="fw-700 mb-2">Description</h6>
+        <p style="color:var(--text-secondary);line-height:1.8;">{{ product.description }}</p>
+      </div>
+      {% endif %}
+
+      <div class="d-flex gap-3 mb-4">
+        {% if current_user.is_authenticated %}
+          <button class="btn-pv btn-primary-pv" data-bs-toggle="modal" data-bs-target="#orderModal">
+            <i class="bi bi-bag-check"></i> Confirm Order
+          </button>
+          <button class="btn-pv btn-outline-pv" id="favBtn" onclick="toggleFav({{ product.id }}, this)">
+            <i class="bi bi-heart{% if is_fav %}-fill{% endif %}"></i>
+          </button>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}" class="btn-pv btn-primary-pv">
+            <i class="bi bi-box-arrow-in-right"></i> Login to Order
+          </a>
+        {% endif %}
+        <a href="{{ url_for('main.contact') }}" class="btn-pv btn-glass">
+          <i class="bi bi-chat-dots"></i> Ask a Question
+        </a>
+      </div>
+
+      <!-- Features -->
+      <div class="d-flex flex-wrap gap-3">
+        {% for icon, label in [('bi-lightning-fill','Fast Printing'),('bi-gem','Premium Quality'),('bi-shield-check','Guaranteed'),('bi-truck','Fast Delivery')] %}
+        <div class="d-flex align-items-center gap-2" style="color:var(--text-secondary);font-size:.85rem;">
+          <i class="bi {{ icon }}" style="color:var(--primary-light);"></i>{{ label }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products -->
+  {% if related %}
+  <div class="mt-5">
+    <h3 class="fw-700 mb-4">Related Products</h3>
+    <div class="row g-4">
+      {% for p in related %}
+      <div class="col-sm-6 col-lg-3">
+        <div class="product-card h-100">
+          <div class="product-card-img-wrap">
+            {% if p.primary_image %}
+              <img src="{{ url_for('static', filename='uploads/' + p.primary_image) }}"
+                   alt="{{ p.name }}" class="product-card-img"/>
+            {% else %}
+              <div class="product-card-img d-flex align-items-center justify-content-center"
+                   style="background:linear-gradient(135deg,rgba(108,99,255,.15),rgba(255,101,132,.1));">
+                <i class="bi bi-image" style="font-size:2.5rem;color:var(--text-muted);"></i>
+              </div>
+            {% endif %}
+          </div>
+          <div class="product-card-body">
+            <h6 class="fw-600 mb-1">{{ p.name }}</h6>
+            <div class="d-flex align-items-center justify-content-between">
+              <span class="product-price">₹{{ "%.0f"|format(p.price) }}</span>
+              <a href="{{ url_for('buyer.product_detail', pid=p.id) }}" class="btn-pv btn-primary-pv btn-sm-pv">
+                <i class="bi bi-eye"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ORDER MODAL -->
+{% if current_user.is_authenticated %}
+<div class="modal fade modal-pv" id="orderModal" aria-labelledby="orderModalLabel" aria-hidden="true" style="z-index: 1070;">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-700" id="orderModalLabel">
+          <i class="bi bi-bag-plus me-2" style="color:var(--primary-light);"></i>
+          Place Order — {{ product.name }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('buyer.place_order', pid=product.id) }}"
+            enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="row g-3">
+            <!-- Customer Details -->
+            <div class="col-12">
+              <h6 class="fw-700 mb-2" style="color:var(--primary-light);">
+                <i class="bi bi-person me-1"></i> Customer Details
+              </h6>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-pv">Full Name</label>
+              <input type="text" name="customer_name" class="form-control form-control-pv"
+                     value="{{ current_user.full_name }}" required/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-pv">Email</label>
+              <input type="email" name="customer_email" class="form-control form-control-pv"
+                     value="{{ current_user.email }}" required/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label-pv">Phone Number</label>
+              <input type="tel" name="customer_phone" class="form-control form-control-pv"
+                     value="{{ current_user.phone or '' }}" placeholder="+977 98-0000-0000"/>
+            </div>
+
+            <!-- Order Details -->
+            <div class="col-12 mt-2">
+              <h6 class="fw-700 mb-2" style="color:var(--primary-light);">
+                <i class="bi bi-box-seam me-1"></i> Order Details
+              </h6>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-pv">Quantity</label>
+              <input type="number" name="quantity" class="form-control form-control-pv"
+                     value="1" min="1" required oninput="updateTotal(this.value)"/>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-pv">Size</label>
+              <select name="size" class="form-select form-control-pv form-select-pv">
+                <option value="">Select size</option>
+                <option>A6 (10×15 cm)</option>
+                <option>A5 (15×21 cm)</option>
+                <option>A4 (21×30 cm)</option>
+                <option>A3 (30×42 cm)</option>
+                <option>A2 (42×60 cm)</option>
+                <option>A1 (60×84 cm)</option>
+                <option>A0 (84×119 cm)</option>
+                <option>Custom</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-pv">Material</label>
+              <select name="material" class="form-select form-control-pv form-select-pv">
+                <option value="">Select material</option>
+                <option>Glossy Paper</option>
+                <option>Matte Paper</option>
+                <option>Canvas</option>
+                <option>Vinyl</option>
+                <option>PVC</option>
+                <option>Fabric</option>
+                <option>Premium Card Stock</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label-pv">Color</label>
+              <input type="text" name="color" class="form-control form-control-pv"
+                     placeholder="e.g. Full Color, B&W"/>
+            </div>
+
+            <!-- Total -->
+            <div class="col-12">
+              <div class="p-3" style="background:linear-gradient(135deg,rgba(108,99,255,.12),rgba(255,101,132,.08));
+                                       border-radius:12px;border:1px solid rgba(108,99,255,.2);">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span style="color:var(--text-secondary);">Estimated Total</span>
+                  <span class="fw-800" style="font-size:1.4rem;color:var(--primary-light);" id="orderTotal">
+                    ₹{{ "%.0f"|format(product.price) }}
+                  </span>
+                </div>
+                <small style="color:var(--text-muted);">₹{{ "%.0f"|format(product.price) }} × <span id="qtyDisplay">1</span> unit(s)</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-pv btn-glass" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-pv btn-primary-pv">
+            <i class="bi bi-bag-check"></i> Confirm Order
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Move modal to body on load to prevent backdrop overlay issues caused by parent animations
+document.addEventListener('DOMContentLoaded', () => {
+  const modalEl = document.getElementById('orderModal');
+  if (modalEl) {
+    document.body.appendChild(modalEl);
+  }
+});
+
+const unitPrice = {{ product.price|default(0) }};
+
+function updateTotal(qty) {
+  const q = parseInt(qty) || 1;
+  document.getElementById('orderTotal').textContent = '₹' + Math.round(unitPrice * q).toLocaleString();
+  document.getElementById('qtyDisplay').textContent = q;
+}
+
+function toggleFav(pid, btn) {
+  fetch(`/buyer/favorite/${pid}`, {method:'POST'})
+    .then(r => r.json())
+    .then(d => {
+      const icon = btn.querySelector('i');
+      icon.className = d.favorited ? 'bi bi-heart-fill' : 'bi bi-heart';
+    });
+}
+
+// Carousel thumbnails
+function goToSlide(index) {
+  const carousel = bootstrap.Carousel.getOrCreateInstance(document.getElementById('productCarousel'));
+  carousel.to(index);
+}
+</script>
+<script>
+// ── Zoom on Hover ────────────────────────────────────────────────────────
+(function() {
+  const wrap = document.getElementById('zoomWrap');
+  const img  = document.getElementById('zoomMainImg');
+  const lens = document.getElementById('zoomLens');
+  if (!wrap || !img || !lens) return;
+
+  const ZOOM = 2.5; // magnification factor
+
+  function initLensBackground() {
+    lens.style.backgroundImage = `url('${img.src}')`;
+  }
+  initLensBackground();
+
+  // Recalculate on every image swap
+  function moveLens(e) {
+    e.preventDefault();
+    const rect = wrap.getBoundingClientRect();
+    // cursor position relative to container
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+    // clamp inside bounds
+    x = Math.max(0, Math.min(x, rect.width));
+    y = Math.max(0, Math.min(y, rect.height));
+
+    const lensW = lens.offsetWidth;
+    const lensH = lens.offsetHeight;
+
+    // position lens centred on cursor
+    lens.style.left = (x - lensW / 2) + 'px';
+    lens.style.top  = (y - lensH / 2) + 'px';
+
+    // background-size = image natural size × zoom
+    const bgW = rect.width * ZOOM;
+    const bgH = rect.height * ZOOM;
+    lens.style.backgroundSize = `${bgW}px ${bgH}px`;
+
+    // offset background so the cursor point is at the lens centre
+    const bgX = -(x * ZOOM - lensW / 2);
+    const bgY = -(y * ZOOM - lensH / 2);
+    lens.style.backgroundPosition = `${bgX}px ${bgY}px`;
+  }
+
+  wrap.addEventListener('mousemove', moveLens);
+  wrap.addEventListener('mouseenter', () => { lens.style.display = 'block'; setTimeout(() => lens.style.opacity = '1', 10); });
+  wrap.addEventListener('mouseleave', () => { lens.style.opacity = '0'; setTimeout(() => lens.style.display = 'none', 150); });
+
+  // Thumbnail switch
+  window.switchZoomImage = function(thumbEl) {
+    document.querySelectorAll('.pv-thumb').forEach(t => t.classList.remove('active-thumb'));
+    thumbEl.classList.add('active-thumb');
+    img.src = thumbEl.dataset.full;
+    initLensBackground();
+  };
+})();
+</script>
+{% endblock %}

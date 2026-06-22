@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block meta_description %}Login to Print Village — Access your buyer or seller dashboard.{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center py-5"
+     style="background:radial-gradient(ellipse 80% 60% at 30% 50%, rgba(108,99,255,.12) 0%, transparent 60%);">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-10 col-lg-8 col-xl-6">
+
+        <!-- Card -->
+        <div class="form-pv animate-fade-up">
+          <!-- Header -->
+          <div class="text-center mb-4">
+            <a href="{{ url_for('main.index') }}" class="navbar-brand-pv text-decoration-none d-inline-block mb-3" style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;">
+              <i class="bi bi-printer-fill me-2"></i>Print Village
+            </a>
+            <h1 class="h3 mb-1">Welcome Back</h1>
+            <p style="color:var(--text-secondary);">Sign in to continue to your account</p>
+          </div>
+
+          <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+            <!-- Email -->
+            <div class="mb-3">
+              <label class="form-label-pv" for="email">
+                <i class="bi bi-envelope me-1"></i> Email Address
+              </label>
+              <input type="email" id="email" name="email" required
+                     class="form-control form-control-pv"
+                     placeholder="you@example.com"
+                     autocomplete="email"/>
+            </div>
+
+            <!-- Password -->
+            <div class="mb-3">
+              <label class="form-label-pv" for="password">
+                <i class="bi bi-lock me-1"></i> Password
+              </label>
+              <div class="position-relative">
+                <input type="password" id="password" name="password" required
+                       class="form-control form-control-pv"
+                       placeholder="Enter your password"
+                       autocomplete="current-password"/>
+                <button type="button" class="btn-glass btn-sm-pv position-absolute end-0 top-50 translate-middle-y me-2 border-0"
+                        style="background:none;color:var(--text-muted);"
+                        onclick="togglePassword('password',this)">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Remember Me -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                <label class="form-check-label" for="remember" style="color:var(--text-secondary);font-size:.9rem;">
+                  Remember me for 14 days
+                </label>
+              </div>
+              <a href="{{ url_for('auth.forgot_password') }}" style="font-size:.85rem;color:var(--primary-light);">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="btn-pv btn-primary-pv w-100 justify-content-center">
+              <i class="bi bi-box-arrow-in-right"></i> Sign In
+            </button>
+          </form>
+
+          <div class="text-center mt-4" style="color:var(--text-secondary);font-size:.9rem;">
+            Don't have an account?
+            <a href="{{ url_for('auth.register') }}" style="color:var(--primary-light);font-weight:600;">
+              Create one free
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePassword(id, btn) {
+  const inp = document.getElementById(id);
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    btn.innerHTML = '<i class="bi bi-eye-slash"></i>';
+  } else {
+    inp.type = 'password';
+    btn.innerHTML = '<i class="bi bi-eye"></i>';
+  }
+}
+</script>
+{% endblock %}
